@@ -1,47 +1,47 @@
 cmake_minimum_required(VERSION 3.25.0)
 include(GNUInstallDirs)
+
 find_library(
-    CuvisCpp_LIBRARY
+	Cuvis_LIBRARY
     NAMES "cuvis"
     HINTS "/lib/cuvis" "$ENV{PROGRAMFILES}/Cuvis/bin")
 
-find_path(CuvisCpp_INCLUDE_DIR
-  NAMES cuvis.h
-  HINTS "/usr/include/" "$ENV{PROGRAMFILES}/Cuvis/sdk/cuvis_c")
+find_path(Cuvis_INCLUDE_DIR
+	NAMES cuvis.h
+	HINTS "/usr/include/" "$ENV{PROGRAMFILES}/Cuvis/sdk/cuvis_c")
 
 include(FindPackageHandleStandardArgs)
 
-mark_as_advanced(CuvisCpp_LIBRARY CuvisCpp_INCLUDE_DIR)
+mark_as_advanced(Cuvis_LIBRARY Cuvis_INCLUDE_DIR)
 
-if(NOT CuvisCpp_LIBRARY)
+
+if(NOT Cuvis_LIBRARY)
 	message(FATAL_ERROR "Could not locate cuvis library")
 else()
-  if(NOT TARGET cuvis::cpp)
-	  add_library(cuvis::cpp STATIC IMPORTED)
-	  
-	  #simmilar to the c library, we use the cuvis.dll, howver we add 
-	  #the cpp interface file as well as force the utilizing target to switch to c++17
+  if(NOT TARGET cuvis::c)
+	  add_library(cuvis::c STATIC IMPORTED)
 	  set_target_properties(
-		cuvis::cpp
+		cuvis::c
 		PROPERTIES
-		  INTERFACE_INCLUDE_DIRECTORIES "${CuvisCpp_INCLUDE_DIR};${CMAKE_CURRENT_LIST_DIR}/interface"
-		  IMPORTED_LOCATION ${CuvisCpp_LIBRARY})
-		target_compile_features(cuvis::cpp INTERFACE cxx_std_17)
-  endif()		
-	
+		  INTERFACE_INCLUDE_DIRECTORIES "${Cuvis_INCLUDE_DIR}"
+		  IMPORTED_LOCATION ${Cuvis_LIBRARY})
+	  
+	  
+  endif()
+  
   # Function to extract version from DLL
   function(get_library_version LIB_PATH OUTPUT_VARIABLE)
-    set(GET_VERSION_SOURCE "${CMAKE_CURRENT_LIST_DIR}/helper/get_version.cpp")
+    set(GET_VERSION_SOURCE "${CMAKE_CURRENT_LIST_DIR}/helper/get_version.c")
 
 	try_run(
 		GET_VERSION_RUN_RESULT GET_VERSION_COMPILE_RESULT
         ${CMAKE_BINARY_DIR}/try_compile
         SOURCES ${GET_VERSION_SOURCE}
 		RUN_OUTPUT_VARIABLE  ${OUTPUT_VARIABLE}
-		LINK_LIBRARIES cuvis::cpp
+		LINK_LIBRARIES cuvis::c
         CMAKE_FLAGS
             -DINCLUDE_DIRECTORIES=${Cuivs_INCLUDE_DIR}
-            -DLINK_LIBRARIES=${CuvisCpp_LIBRARY}
+            -DLINK_LIBRARIES=${Cuvis_LIBRARY}
 		)
 		if (NOT GET_VERSION_COMPILE_RESULT)
 			message(FATAL_ERROR "Failed to compile and run get_version_executable")
@@ -51,7 +51,7 @@ else()
   endfunction()
 
   # Get the version of the library
-  get_library_version("${CuvisCpp_LIBRARY}" LIB_VERSION)
+  get_library_version("${Cuvis_LIBRARY}" LIB_VERSION)
 
   # Parse the version components
   string(REGEX MATCH "v\\. ([0-9]+)\\.([0-9]+)\\.([0-9]+)" LIB_VERSION_MATCH "${LIB_VERSION}")
@@ -69,13 +69,14 @@ else()
 
   # Provide configuration information for find_package(Cuvis)
 
-  set(CuvisCpp_FOUND TRUE CACHE INTERNAL "")
-  set(CuvisCpp_VERSION "${lib_version_MAJOR}.${lib_version_MINOR}.${lib_version_PATCH}" CACHE INTERNAL "")
-  set(CuvisCpp_INCLUDE_DIRS "${CuvisCpp_INCLUDE_DIR}" CACHE INTERNAL "")
-  set(CuvisCpp_LIBRARIES "cuvis::cpp" CACHE INTERNAL "")
+  set(Cuvis_FOUND TRUE CACHE INTERNAL "")
+  set(Cuvis_VERSION "${lib_version_MAJOR}.${lib_version_MINOR}.${lib_version_PATCH}" CACHE INTERNAL "")
+  set(Cuvis_INCLUDE_DIRS "${Cuvis_INCLUDE_DIR}" CACHE INTERNAL "")
+  set(Cuvis_LIBRARIES "cuvis::c" CACHE INTERNAL "")
 
-  find_package_handle_standard_args(CuvisCpp
-		REQUIRED_VARS CuvisCpp_LIBRARY CuvisCpp_INCLUDE_DIR
-		VERSION_VAR CuvisCpp_VERSION)
+  find_package_handle_standard_args(Cuvis
+		REQUIRED_VARS Cuvis_LIBRARY Cuvis_INCLUDE_DIR
+		VERSION_VAR Cuvis_VERSION)
+
 
 endif()

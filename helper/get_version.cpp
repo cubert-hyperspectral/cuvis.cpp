@@ -1,9 +1,7 @@
-#include <stdio.h>
-#include "cuvis.h"
+#include<iostream>
+#include <cuvis.hpp>
 
 int main() {
-    CUVIS_CHAR version[CUVIS_MAXBUF];
-    cuvis_version(version);
-    printf("%s", version);
+    std::cout << cuvis::General::version();
     return 0;
 }
