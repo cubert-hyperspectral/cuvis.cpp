@@ -24,9 +24,47 @@ else()
 	  set_target_properties(
 		cuvis::cpp
 		PROPERTIES
-		  INTERFACE_INCLUDE_DIRECTORIES "${CuvisCpp_INCLUDE_DIR};${CMAKE_CURRENT_LIST_DIR}/interface"
+		  INTERFACE_INCLUDE_DIRECTORIES "${CuvisCpp_INCLUDE_DIR};${CMAKE_CURRENT_LIST_DIR}/interface;${CMAKE_CURRENT_LIST_DIR}/auxiliary/include"
 		  IMPORTED_LOCATION ${CuvisCpp_LIBRARY})
 		target_compile_features(cuvis::cpp INTERFACE cxx_std_17)
+ 
+	  find_package(Doxygen)
+	  option(DOXYGEN_BUILD_DOCUMENTATION "Create and install the HTML based API documentation (requires Doxygen)" TRUE)
+			
+	  if(DOXYGEN_BUILD_DOCUMENTATION)
+		  if(NOT DOXYGEN_FOUND)
+			 message(status "Doxygen is needed to build the documentation.")
+	      else()
+			  if(NOT TARGET cuvis_cpp_doxygen)
+			  
+				  file(MAKE_DIRECTORY  ${CMAKE_BINARY_DIR}/doc )
+					
+					set(MAINPAGE ${CMAKE_CURRENT_LIST_DIR}/doc/mainpage.hpp)
+					set(CPPSDK_INTERFACE_DIR ${CMAKE_CURRENT_LIST_DIR}/interface)
+					set(CPPSDK_AUX_DIR ${CMAKE_CURRENT_LIST_DIR}/auxiliary/include)
+					set(DOXYGEN_IN ${CMAKE_CURRENT_LIST_DIR}/doxygen/doxyfile_iface.in)
+					set(DOXYGEN_OUT ${CMAKE_CURRENT_BINARY_DIR}/doxyfile_iface)
+
+					# request to configure the file
+					configure_file(${DOXYGEN_IN} ${DOXYGEN_OUT} @ONLY)	
+					
+					add_custom_target(cuvis_cpp_doxygen 
+					COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/doxyfile_iface
+									  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+									  COMMENT "Generating API documentation with Doxygen (iface)"
+									  VERBATIM
+					)
+					
+					
+			  
+				endif()
+		  endif()
+		  
+		  
+		add_dependencies(cuvis::cpp cuvis_cpp_doxygen)
+	 
+	 
+		endif()
   endif()		
 	
   # Function to extract version from DLL
