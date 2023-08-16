@@ -1104,7 +1104,7 @@ namespace cuvis
     async._async = std::shared_ptr<CUVIS_ASYNC_CALL_RESULT>(        \
         new CUVIS_ASYNC_CALL_RESULT{async_handle},                  \
         [](CUVIS_ASYNC_CALL_RESULT* handle) {                       \
-          cuvis_async_capture_free(handle);                         \
+          cuvis_async_call_free(handle);                            \
           delete handle;                                            \
         });                                                         \
     return async;                                                   \
