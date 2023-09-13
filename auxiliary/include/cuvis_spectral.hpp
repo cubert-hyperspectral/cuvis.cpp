@@ -9,10 +9,10 @@
   * @copyright Apache V2.0
   * */
 
-//TODO make Simon check the comments
 
 #include <cassert>
 #include <cuvis.hpp>
+#include <numeric>
 #include <opencv2/opencv.hpp>
 #include <vector>
 
@@ -24,6 +24,47 @@
   * */
 namespace cuvis::aux::spectral
 {
+
+  template <typename data_t>
+  inline int get_mat_datatype(int channel_count)
+  {
+    if (channel_count < 1 || channel_count > 511)
+      throw std::invalid_argument("Invalid channel count");
+
+    if constexpr (!std::is_floating_point<data_t>::value)
+    {
+      if constexpr (!std::is_signed<data_t>::value)
+      {
+        switch (sizeof(data_t))
+        {
+          case 1: return CV_MAKETYPE(CV_8U, channel_count);
+          case 2: return CV_MAKETYPE(CV_16U, channel_count);
+          default: throw std::invalid_argument("Invalid bitdepth for unsigned integer data type");
+        }
+      }
+      else
+      {
+        switch (sizeof(data_t))
+        {
+          case 1: return CV_MAKETYPE(CV_8S, channel_count);
+          case 2: return CV_MAKETYPE(CV_16S, channel_count);
+          case 4: return CV_MAKETYPE(CV_32S, channel_count);
+          default: throw std::invalid_argument("Invalid bitdepth for signed integer data type");
+        }
+      }
+    }
+    else
+    {
+      switch (sizeof(data_t))
+      {
+        case 2: return CV_MAKETYPE(CV_16F, channel_count);
+        case 4: return CV_MAKETYPE(CV_32F, channel_count);
+        case 8: return CV_MAKETYPE(CV_64F, channel_count);
+        default: throw std::invalid_argument("Invalid bitdepth for floating point data type");
+      }
+    }
+  }
+
   /** @brief Couple of wavelength, respective mean value and standard deviation with default values.
    *  
    * Basic type for spectral information.
@@ -50,7 +91,7 @@ namespace cuvis::aux::spectral
     std::uint32_t wavelength;
 
     /** The count for a specific center wavelength.*/
-    std::vector<std::uint64_t> count;
+    std::vector<std::float_t> count;
 
     /** The occurence for the respective count.*/
     std::vector<std::uint64_t> occurrence;
@@ -90,8 +131,7 @@ namespace cuvis::aux::spectral
     * @param[in] poly Polygon for subsetting the image (can also be only 1 point)
     * @returns A vector of type @ref spectrum_t
     * */
-  spectrum_t
-      get_spectrum_polygon(image_t<data_t> const& img, polygon_t const& poly)
+  spectrum_t get_spectrum_polygon(image_t<data_t> const& img, polygon_t const& poly)
   {
     //checks if image is reasonable.
     assert(img._width > 1);
@@ -108,8 +148,7 @@ namespace cuvis::aux::spectral
       std::vector<cv::Point> transformed_pt; //needs to be integers
       for (auto const& pt : poly)
       {
-        transformed_pt.emplace_back(
-            pt._x * (img._width - 1), pt._y * (img._height - 1));
+        transformed_pt.emplace_back(pt._x * (img._width - 1), pt._y * (img._height - 1));
       }
 
       //empty mask
@@ -119,10 +158,9 @@ namespace cuvis::aux::spectral
       //using nearest neighbor
       cv::fillPoly(mask, transformed_pt, cv::Scalar(255));
 
-      std::uint16_t n = 0;                                  //counter variable
-      std::vector<std::double_t> sum_v(img._channels, 0.0); //growing sum
-      std::vector<std::double_t> sq_sum_v(
-          img._channels, 0.0); //growing square sum
+      std::uint16_t n = 0;                                     //counter variable
+      std::vector<std::double_t> sum_v(img._channels, 0.0);    //growing sum
+      std::vector<std::double_t> sq_sum_v(img._channels, 0.0); //growing square sum
 
       //checking all pixels in polygon mask
       for (int x = 0; x < img._width; x++)
@@ -135,8 +173,7 @@ namespace cuvis::aux::spectral
             for (int z = 0; z < img._channels; z++)
             {
               //reading out value
-              auto loc_val =
-                  img._data[((y)*img._width + (x)) * img._channels + (z)];
+              auto loc_val = img._data[((y)*img._width + (x)) * img._channels + (z)];
               //adding up values
               sum_v[z] += loc_val;
               sq_sum_v[z] += loc_val * loc_val;
@@ -155,8 +192,7 @@ namespace cuvis::aux::spectral
         // sum(x - y)^2 = sum( x^2 - 2xy + y^2) // second binomial formula
         // Therefore: (sum(x^2) - 2 * sum(x) * y + n*y^2 ) / n
         // Therefore (sum(x^2) - 2 * sum(x) * y ) / n + y^2
-        loc_res.std =
-            sqrt((sq_sum_v[z] - 2 * sum_v[z] * mean) / n + mean * mean);
+        loc_res.std = sqrt((sq_sum_v[z] - 2 * sum_v[z] * mean) / n + mean * mean);
 
         // set wavelength
         std::uint32_t loc_wl = img._wavelength[z];
@@ -169,8 +205,7 @@ namespace cuvis::aux::spectral
     else if (poly.size() == 1) //single point case
     {
       //check if out of range
-      if (poly.front()._x > 1.0 || poly.front()._x < 0.0 ||
-          poly.front()._y > 1.0 || poly.front()._y < 0.0)
+      if (poly.front()._x > 1.0 || poly.front()._x < 0.0 || poly.front()._y > 1.0 || poly.front()._y < 0.0)
       {
         // outside range. nothing to return
         // TODO throw error?
@@ -180,8 +215,7 @@ namespace cuvis::aux::spectral
       for (int z = 0; z < img._channels; z++)
       {
         //calculate position in memory
-        int y_shift =
-            std::round(poly.front()._y * (img._height - 1)) * img._width;
+        int y_shift = std::round(poly.front()._y * (img._height - 1)) * img._width;
         int xy_shift = y_shift + std::round(poly.front()._x * (img._width - 1));
         //read out point value
         double loc_val = img._data[xy_shift * img._channels + z];
@@ -201,7 +235,6 @@ namespace cuvis::aux::spectral
     }
   }
 
-
   /** @brief Calculates a histogram for an image
     *
     * Calculates a histogram for all wavelengths with counts and occurence
@@ -214,88 +247,76 @@ namespace cuvis::aux::spectral
     * @returns A vector of type @ref histogram_vector_t
     * */
   template <typename data_t>
-  histogram_vector_t get_histogram(
-      image_t<data_t> const& img,
-      size_t histogram_min_size,
-      size_t count_bins,
-      size_t wavelength_bins,
-      bool detect_max_value)
+  histogram_vector_t get_histogram(image_t<data_t> const& img, size_t histogram_min_size, size_t count_bins, size_t wavelength_bins, bool detect_max_value, cuvis_processing_mode_t proc_mode)
   {
     histogram_vector_t output;
-    //check if data is available and
+    // Check if data is available and that the image is large enough
     assert(img._height * img._width * img._channels > histogram_min_size);
     assert(img._wavelength != nullptr);
 
-    data_t max_val = data_t(0);
-    //detect maximum value for all data
+    auto mat_datatype = get_mat_datatype<data_t>(img._channels);
+
+    // Yes, the 'const' needs to be removed, OpenCV does not have a cv::ConstMat
+    // Making the Mat itself const only means that the Mat header (meta-data) is const.
+    // ! Make sure that data in this Mat is not modified in this function !
+    const cv::Mat const_img_mat(cv::Size(img._width, img._height), mat_datatype, const_cast<void*>(static_cast<const void*>(img._data)));
+
+    // Find maximum value for all data
+    double max_val = 0;
     if (detect_max_value)
     {
-      for (size_t y = 0; y < img._height; y++)
-      {
-        for (size_t x = 0; x < img._width; x++)
-        {
-          for (size_t i = 0; i < img._channels; i++)
-          {
-            data_t value = img._data[(y * img._width + x) * img._channels + i];
-            if (value > max_val)
-            {
-              max_val = value;
-            }
-          }
-        }
-      }
+      cv::minMaxLoc(const_img_mat, nullptr, &max_val, nullptr, nullptr);
     }
     else
     {
-      // maxval is set to possible absolute maximum
-      //size_t bit_depth = sizeof(data_t) * 8;
-      data_t max_val = std::numeric_limits<decltype(max_val)>::max();
+      max_val = double(std::numeric_limits<data_t>::max());
     }
 
-    //calculate the size of each count bin for the histogram (min 1)
-    const size_t bin_size =
-        max_val / count_bins != 0 ? max_val / count_bins : 1;
+    const double bin_size = max_val / double(count_bins);
+    const double wlbin_size = double(img._channels) / double(wavelength_bins);
+    const int img_channels_per_wlbin = static_cast<const int>(wlbin_size);
+    const int histogram_count = img._channels / img_channels_per_wlbin;
 
-    //calculate the size of each wavelength bin for the histogram (min 1)
-    const size_t wlbin_size = img._channels / wavelength_bins != 0
-                                  ? img._channels / wavelength_bins
-                                  : 1;
-
-    // Prepare histogram vector
-    for (size_t i = 0; i < img._channels; i += wlbin_size)
+    // Calculate histograms
+    for (int count = 0; count < histogram_count; count++)
     {
-      // Initialize histogram objects
-      histogram_t histogram;
-      size_t const floor_maxval_width =
-          static_cast<size_t>(std::floor(max_val / bin_size));
-      histogram.occurrence = std::vector<std::uint64_t>(floor_maxval_width);
-      histogram.count = std::vector<std::uint64_t>(floor_maxval_width);
-      histogram.wavelength = img._wavelength[i + wlbin_size / 2];
-      for (size_t k = 0; k < floor_maxval_width; k++)
+      int bins[] = {int(count_bins)};
+      float range[] = {0.0f, float(max_val)};
+      const float* ranges[] = {range};
+      cv::Mat hist;
+
+      int channels[] = {0};
+      // Accumulate histograms per channel
+      for (int c = 0; c < img_channels_per_wlbin; c++)
       {
-        histogram.count[k] =
-            static_cast<std::remove_reference_t<decltype(histogram.count[0])>>(
-                k * bin_size);
+        channels[0] = c + count * img_channels_per_wlbin;
+        bool accumulate = c != 0;
+        cv::calcHist(&const_img_mat, 1, channels, cv::Mat(), hist, 1, bins, ranges, true, accumulate);
       }
-      output.push_back(histogram);
-    }
 
-    // Iterate over cube: Fill out histograms
-    for (size_t y = 0; y < img._height; y++)
-    {
-      for (size_t x = 0; x < img._width; x++)
+      // Prepare histogram data struct
+      histogram_t histogram;
+      histogram.occurrence = std::vector<std::uint64_t>(hist.total());
+      histogram.count = std::vector<std::float_t>(hist.total());
+      histogram.wavelength = img._wavelength[count * img_channels_per_wlbin + int(img_channels_per_wlbin / 2)];
+
+      // Transfer histogram counts & set x-axis labels
+      for (int idx = 0; idx < hist.total(); idx++)
       {
-        for (size_t i = 0; i < img._channels; i++)
+        // Note: calcHist always returns counts as floats
+        histogram.occurrence[idx] = static_cast<std::uint64_t>(reinterpret_cast<float*>(hist.data)[idx]);
+        if (proc_mode == Cube_Reflectance)
         {
-          data_t value = img._data[(y * img._width + x) * img._channels + i];
-          std::uint64_t region = std::uint64_t(std::floor(value / bin_size));
-          if (region >= count_bins)
-            region = count_bins - 1;
-          output[i / wlbin_size].occurrence[region]++;
+          histogram.count[idx] = static_cast<std::float_t>((idx * bin_size) / 100.0);
+        }
+        else
+        {
+          histogram.count[idx] = static_cast<std::float_t>(idx * bin_size);
         }
       }
-    }
 
+      output.push_back(histogram);
+    }
     return output;
   }
 
