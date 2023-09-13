@@ -1,13 +1,22 @@
 cmake_minimum_required(VERSION 3.25.0)
 include(GNUInstallDirs)
+
+if ("${Cuvis_LIBRARY_SEARCH_PATH}" STREQUAL "")
+set(Cuvis_LIBRARY_SEARCH_PATH "$ENV{PROGRAMFILES}/Cuvis/bin")
+endif()
+
+if ("${Cuvis_HEADER_SEARCH_PATH}" STREQUAL "")
+set(Cuvis_HEADER_SEARCH_PATH "$ENV{PROGRAMFILES}/Cuvis/sdk/cuvis_c")
+endif()
+
 find_library(
     CuvisCpp_LIBRARY
     NAMES "cuvis"
-    HINTS "/lib/cuvis" "$ENV{PROGRAMFILES}/Cuvis/bin")
+    HINTS "/lib/cuvis" "${Cuvis_LIBRARY_SEARCH_PATH}")
 
 find_path(CuvisCpp_INCLUDE_DIR
   NAMES cuvis.h
-  HINTS "/usr/include/" "$ENV{PROGRAMFILES}/Cuvis/sdk/cuvis_c")
+  HINTS "/usr/include/" "${Cuvis_HEADER_SEARCH_PATH}")
 
 include(FindPackageHandleStandardArgs)
 
