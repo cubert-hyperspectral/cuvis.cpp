@@ -2,21 +2,29 @@ cmake_minimum_required(VERSION 3.16.0)
 include(GNUInstallDirs)
 
 if ("${CuvisCpp_LIBRARY_SEARCH_PATH}" STREQUAL "")
-set(CuvisCpp_LIBRARY_SEARCH_PATH "$ENV{PROGRAMFILES}/Cuvis/bin" CACHE PATH "")
+	if(WIN32)
+		set(CuvisCpp_LIBRARY_SEARCH_PATH "$ENV{PROGRAMFILES}/Cuvis/bin" CACHE PATH "")
+	else()
+		set(CuvisCpp_LIBRARY_SEARCH_PATH "/lib/cuvis" CACHE PATH "")
+	endif()
 endif()
 
 if ("${CuvisCpp_HEADER_SEARCH_PATH}" STREQUAL "")
-set(CuvisCpp_HEADER_SEARCH_PATH "$ENV{PROGRAMFILES}/Cuvis/sdk/cuvis_c" CACHE PATH "")
+	if(WIN32)
+		set(CuvisCpp_HEADER_SEARCH_PATH "$ENV{PROGRAMFILES}/Cuvis/sdk/cuvis_c" CACHE PATH "")
+	else()
+		set(CuvisCpp_HEADER_SEARCH_PATH "/usr/include/" CACHE PATH "")
+	endif()
 endif()
 
 find_library(
     CuvisCpp_LIBRARY
     NAMES "cuvis"
-    HINTS "/lib/cuvis" "${CuvisCpp_LIBRARY_SEARCH_PATH}")
+    HINTS "${CuvisCpp_LIBRARY_SEARCH_PATH}")
 
 find_path(CuvisCpp_INCLUDE_DIR
   NAMES cuvis.h
-  HINTS "/usr/include/" "${CuvisCpp_HEADER_SEARCH_PATH}")
+  HINTS "${CuvisCpp_HEADER_SEARCH_PATH}")
 
 include(FindPackageHandleStandardArgs)
 
@@ -26,7 +34,8 @@ if(NOT CuvisCpp_LIBRARY)
 	message(FATAL_ERROR "Could not locate cuvis library")
 else()
   if(NOT TARGET cuvis::cpp)
-	  add_library(cuvis::cpp STATIC IMPORTED)
+
+	  add_library(cuvis::cpp STATIC IMPORTED GLOBAL)
 	  
 	  #simmilar to the c library, we use the cuvis.dll, howver we add 
 	  #the cpp interface file as well as force the utilizing target to switch to c++17
