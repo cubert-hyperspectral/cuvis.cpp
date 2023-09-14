@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.25.0)
+cmake_minimum_required(VERSION 3.16.0)
 include(GNUInstallDirs)
 
 if ("${CuvisCpp_LIBRARY_SEARCH_PATH}" STREQUAL "")
