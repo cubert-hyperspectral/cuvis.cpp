@@ -93,7 +93,9 @@ if(NOT TARGET cuvis::cpp)
 	 
 		endif()
   endif()		
-	
+  
+if (NOT CuvisCpp_LoadWithoutBinary) 
+ 
   # Function to extract version from DLL
   function(get_library_version LIB_PATH OUTPUT_VARIABLE)
     set(GET_VERSION_SOURCE "${CMAKE_CURRENT_LIST_DIR}/helper/get_version.cpp")
@@ -115,7 +117,6 @@ if(NOT TARGET cuvis::cpp)
 
   endfunction()
 
-if (NOT CuvisCpp_LoadWithoutBinary)
   # Get the version of the library
   get_library_version("${CuvisCpp_LIBRARY}" LIB_VERSION)
 
