@@ -1,52 +1,23 @@
-cmake_minimum_required(VERSION 3.16.0)
+cmake_minimum_required(VERSION 3.25.0)
 include(GNUInstallDirs)
-
-if ("${CuvisCpp_LIBRARY_SEARCH_PATH}" STREQUAL "")
-	if(WIN32)
-		set(CuvisCpp_LIBRARY_SEARCH_PATH "$ENV{PROGRAMFILES}/Cuvis/bin" CACHE PATH "")
-	else()
-		set(CuvisCpp_LIBRARY_SEARCH_PATH "/lib/cuvis" CACHE PATH "")
-	endif()
-endif()
-
-if ("${CuvisCpp_HEADER_SEARCH_PATH}" STREQUAL "")
-	if(WIN32)
-		set(CuvisCpp_HEADER_SEARCH_PATH "$ENV{PROGRAMFILES}/Cuvis/sdk/cuvis_c" CACHE PATH "")
-	else()
-		set(CuvisCpp_HEADER_SEARCH_PATH "/usr/include/" CACHE PATH "")
-	endif()
-endif()
-
 find_library(
     CuvisCpp_LIBRARY
     NAMES "cuvis"
-    HINTS "${CuvisCpp_LIBRARY_SEARCH_PATH}")
+    HINTS "/lib/cuvis" "$ENV{PROGRAMFILES}/Cuvis/bin")
 
 find_path(CuvisCpp_INCLUDE_DIR
   NAMES cuvis.h
-  HINTS "${CuvisCpp_HEADER_SEARCH_PATH}")
+  HINTS "/usr/include/" "$ENV{PROGRAMFILES}/Cuvis/sdk/cuvis_c")
 
 include(FindPackageHandleStandardArgs)
 
 mark_as_advanced(CuvisCpp_LIBRARY CuvisCpp_INCLUDE_DIR)
 
-set(CuvisCpp_LoadWithoutBinary FALSE)
-
-if(NOT CuvisCpp_LIBRARY)	
-	if (CONFIGURE_DEPENDS)
-		message(FATAL_ERROR "Could not locate cuvis library")
-	else()
-		message(STATUS "Could not located cuvis library at configure time")
-		set(CuvisCpp_LoadWithoutBinary TRUE)
-		mark_as_advanced(CuvisCpp_LoadWithoutBinary)
-		set(CuvisCpp_LIBRARY "${CuvisCpp_LIBRARY_SEARCH_PATH}/cuvis.lib")
-		set(CuvisCpp_INCLUDE_DIR "${CuvisCpp_HEADER_SEARCH_PATH}")
-	endif()
-endif()
-
-if(NOT TARGET cuvis::cpp)
-
-	  add_library(cuvis::cpp STATIC IMPORTED GLOBAL)
+if(NOT CuvisCpp_LIBRARY)
+	message(FATAL_ERROR "Could not locate cuvis library")
+else()
+  if(NOT TARGET cuvis::cpp)
+	  add_library(cuvis::cpp STATIC IMPORTED)
 	  
 	  #simmilar to the c library, we use the cuvis.dll, howver we add 
 	  #the cpp interface file as well as force the utilizing target to switch to c++17
@@ -95,9 +66,7 @@ if(NOT TARGET cuvis::cpp)
 	 
 		endif()
   endif()		
-  
-if (NOT ${CuvisCpp_LoadWithoutBinary}) 
- 
+	
   # Function to extract version from DLL
   function(get_library_version LIB_PATH OUTPUT_VARIABLE)
     set(GET_VERSION_SOURCE "${CMAKE_CURRENT_LIST_DIR}/helper/get_version.cpp")
@@ -133,7 +102,6 @@ if (NOT ${CuvisCpp_LoadWithoutBinary})
   set(lib_version_MINOR ${CMAKE_MATCH_2})
   set(lib_version_PATCH ${CMAKE_MATCH_3})
 
-endif()
   # Check the library version against the required version
   set(CUVIS_VERSION_STRING "${lib_version_MAJOR}.${lib_version_MINOR}.${lib_version_PATCH}")
 
@@ -147,3 +115,5 @@ endif()
   find_package_handle_standard_args(CuvisCpp
 		REQUIRED_VARS CuvisCpp_LIBRARY CuvisCpp_INCLUDE_DIR
 		VERSION_VAR CuvisCpp_VERSION)
+
+endif()
