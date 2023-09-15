@@ -30,9 +30,15 @@ include(FindPackageHandleStandardArgs)
 
 mark_as_advanced(CuvisCpp_LIBRARY CuvisCpp_INCLUDE_DIR)
 
-if(NOT CuvisCpp_LIBRARY)
-	message(FATAL_ERROR "Could not locate cuvis library")
-else()
+if(NOT CuvisCpp_LIBRARY)	
+	if ("${CuvisCpp_IGNORE_FAILURE}" STREQUAL "")
+		message(FATAL_ERROR "Could not locate cuvis library")
+	else()
+		set(CuvisCpp_LIBRARY "${CuvisCpp_LIBRARY_SEARCH_PATH}/cuvis.lib")
+		set(CuvisCpp_INCLUDE_DIR "${CuvisCpp_HEADER_SEARCH_PATH}")
+	endif()
+endif()
+
   if(NOT TARGET cuvis::cpp)
 
 	  add_library(cuvis::cpp STATIC IMPORTED GLOBAL)
@@ -133,5 +139,3 @@ else()
   find_package_handle_standard_args(CuvisCpp
 		REQUIRED_VARS CuvisCpp_LIBRARY CuvisCpp_INCLUDE_DIR
 		VERSION_VAR CuvisCpp_VERSION)
-
-endif()
