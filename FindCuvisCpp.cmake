@@ -31,15 +31,18 @@ include(FindPackageHandleStandardArgs)
 mark_as_advanced(CuvisCpp_LIBRARY CuvisCpp_INCLUDE_DIR)
 
 if(NOT CuvisCpp_LIBRARY)	
-	if ("${CuvisCpp_IGNORE_FAILURE}" STREQUAL "")
+	if (CONFIGURE_DEPENDS)
 		message(FATAL_ERROR "Could not locate cuvis library")
 	else()
+		message(STATUS "Could not located cuvis library at configure time")
+		set(CuvisCpp_LoadWithoutBinary TRUE)
+		mark_as_advanced(CuvisCpp_LoadWithoutBinary)
 		set(CuvisCpp_LIBRARY "${CuvisCpp_LIBRARY_SEARCH_PATH}/cuvis.lib")
 		set(CuvisCpp_INCLUDE_DIR "${CuvisCpp_HEADER_SEARCH_PATH}")
 	endif()
 endif()
 
-  if(NOT TARGET cuvis::cpp)
+if(NOT TARGET cuvis::cpp)
 
 	  add_library(cuvis::cpp STATIC IMPORTED GLOBAL)
 	  
@@ -112,6 +115,7 @@ endif()
 
   endfunction()
 
+if (NOT CuvisCpp_LoadWithoutBinary)
   # Get the version of the library
   get_library_version("${CuvisCpp_LIBRARY}" LIB_VERSION)
 
@@ -126,6 +130,7 @@ endif()
   set(lib_version_MINOR ${CMAKE_MATCH_2})
   set(lib_version_PATCH ${CMAKE_MATCH_3})
 
+endif()
   # Check the library version against the required version
   set(CUVIS_VERSION_STRING "${lib_version_MAJOR}.${lib_version_MINOR}.${lib_version_PATCH}")
 
