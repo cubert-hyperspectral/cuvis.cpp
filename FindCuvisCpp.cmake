@@ -30,6 +30,8 @@ include(FindPackageHandleStandardArgs)
 
 mark_as_advanced(CuvisCpp_LIBRARY CuvisCpp_INCLUDE_DIR)
 
+set(CuvisCpp_LoadWithoutBinary FALSE)
+
 if(NOT CuvisCpp_LIBRARY)	
 	if (CONFIGURE_DEPENDS)
 		message(FATAL_ERROR "Could not locate cuvis library")
