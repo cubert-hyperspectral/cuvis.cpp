@@ -145,6 +145,7 @@ namespace cuvis::aux::spectral
     // conversion of polygon relative coordinates to absolute pixel coordinates
     if (poly.size() > 1) //polygon case
     {
+
       std::vector<cv::Point> transformed_pt; //needs to be integers
       for (auto const& pt : poly)
       {
@@ -154,9 +155,15 @@ namespace cuvis::aux::spectral
       //empty mask
       cv::Mat mask = cv::Mat::zeros(cv::Size(img._width, img._height), CV_8UC1);
 
+      // https://docs.opencv.org/4.2.0/db/d75/samples_2cpp_2create_mask_8cpp-example.html#a16
+      // apparently this now has to be wrapped
+
+      std::vector<std::vector<cv::Point>> vpts;
+      vpts.push_back(transformed_pt);
+
       //binary mask
       //using nearest neighbor
-      cv::fillPoly(mask, transformed_pt, cv::Scalar(255));
+      cv::fillPoly(mask, vpts, cv::Scalar(255,255,255));
 
       std::uint16_t n = 0;                                     //counter variable
       std::vector<std::double_t> sum_v(img._channels, 0.0);    //growing sum
