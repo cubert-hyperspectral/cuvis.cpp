@@ -1082,6 +1082,7 @@ namespace cuvis
     ACQ_STUB_0a(fps, cuvis_acq_cont_fps, double, double);
     ACQ_STUB_0a(integration_time, cuvis_acq_cont_integration_time, double, double);
     ACQ_STUB_0a(auto_exp, cuvis_acq_cont_auto_exp, int_t, bool);
+    ACQ_STUB_0a(auto_exp_comp, cuvis_acq_cont_auto_exp_comp, double, double);
     ACQ_STUB_0a(preview_mode, cuvis_acq_cont_preview_mode, int_t, bool);
     ACQ_STUB_0a(operation_mode, cuvis_acq_cont_operation_mode, cuvis_operation_mode_t, operation_mode_t);
     ACQ_STUB_0a(average, cuvis_acq_cont_average, int_t, int);
@@ -1095,6 +1096,7 @@ namespace cuvis
     ACQ_STUB_0b(fps, cuvis_acq_cont_fps, double, double);
     ACQ_STUB_0b(integration_time, cuvis_acq_cont_integration_time, double, double);
     ACQ_STUB_0b(auto_exp, cuvis_acq_cont_auto_exp, int_t, bool);
+    ACQ_STUB_0b(auto_exp_comp, cuvis_acq_cont_auto_exp_comp, double, double);
     ACQ_STUB_0b(preview_mode, cuvis_acq_cont_preview_mode, int_t, bool);
     ACQ_STUB_0b(operation_mode, cuvis_acq_cont_operation_mode, cuvis_operation_mode_t, operation_mode_t);
     ACQ_STUB_0b(average, cuvis_acq_cont_average, int_t, int);
