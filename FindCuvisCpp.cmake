@@ -63,8 +63,12 @@ else()
 		  
 		add_dependencies(cuvis::cpp cuvis_cpp_doxygen)
 	 
-	 
 		endif()
+		
+		if (NOT WIN32)
+			set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
+		endif()
+		
   endif()		
 	
   # Function to extract version from DLL
