@@ -1488,8 +1488,8 @@ namespace cuvis
         }
         break;
         case cuvis_data_type_t::data_type_string: {
-          CUVIS_CHAR value[CUVIS_MAXBUF*8];
-          chk(cuvis_measurement_get_data_string(*_mesu, key, value, CUVIS_MAXBUF*8));
+          CUVIS_CHAR value[CUVIS_LONGBUF];
+          chk(cuvis_measurement_get_data_string(*_mesu, key, value, CUVIS_LONGBUF));
           _string_data->emplace(std::string(key), std::string(value));
         }
         break;
