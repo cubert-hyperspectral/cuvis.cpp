@@ -1376,7 +1376,7 @@ namespace cuvis
       if (meta.measurement_flags & flag)
       {
         CUVIS_CHAR value[CUVIS_MAXBUF];
-        chk(cuvis_measurement_get_data_string(*_mesu, key.c_str(), value));
+        chk(cuvis_measurement_get_data_string(*_mesu, key.c_str(), value, CUVIS_MAXBUF));
         _meta->measurement_flags.emplace(key, value);
       }
     };
@@ -1488,8 +1488,8 @@ namespace cuvis
         }
         break;
         case cuvis_data_type_t::data_type_string: {
-          CUVIS_CHAR value[CUVIS_MAXBUF];
-          chk(cuvis_measurement_get_data_string(*_mesu, key, value));
+          CUVIS_CHAR value[CUVIS_MAXBUF*8];
+          chk(cuvis_measurement_get_data_string(*_mesu, key, value, CUVIS_MAXBUF*8));
           _string_data->emplace(std::string(key), std::string(value));
         }
         break;
