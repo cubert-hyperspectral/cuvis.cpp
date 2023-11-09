@@ -25,9 +25,9 @@ First, you need to install the Cuvis C SDK from [here](https://cloud.cubert-gmbh
 
 ### Importing Cuvis CPP SDK via CMake
 
-First, you need to add the directory containing *FindCuvisCpp.cmake* to *CMAKE_MODULE_PATH*. Assuming you added the *cuvis.c* repository as submodule as "${CMAKE_SOURCE_DIR}/cuvis.c" you can add it like so:
+First, you need to add the directory containing *FindCuvisCpp.cmake* to *CMAKE_MODULE_PATH*. Assuming you added the *cuvis.cpp* repository as submodule as "${CMAKE_SOURCE_DIR}/cuvis.cpp" you can add it like so:
 ```
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cuvis.cxx/")
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cuvis.cpp/")
 ```
 
 Then you need to run the *find_package* function:
