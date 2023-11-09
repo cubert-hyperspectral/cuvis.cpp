@@ -21,7 +21,7 @@ source code page.
 
 ### Prerequisites
 
-First, you need to install the Cuvis C SDK from [here](https://cloud.cubert-gmbh.de/index.php/s/kKVtx0x2fmYqVgx).
+First, you need to install the Cuvis C SDK from [here](https://cloud.cubert-gmbh.de/index.php/s/62UdmciCPjxy1pm).
 
 ### Importing Cuvis CPP SDK via CMake
 
