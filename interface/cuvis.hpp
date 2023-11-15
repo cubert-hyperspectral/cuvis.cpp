@@ -315,7 +315,7 @@ namespace cuvis
       * */
     bool add_fullscale_pan;
 
-    /** @brief Set @ref Expor   ter to permisive mode (default: @ref false)
+    /** @brief Set @ref Exporter to permisive mode (default: @ref false)
       *
       * @copydoc cuvis_export_general_settings_t.permissive
       * */
@@ -396,7 +396,14 @@ namespace cuvis
       * @copydoc cuvis_save_args_t.max_buftime
       * */
     std::chrono::milliseconds max_buftime;
+
+    /** Force creation of "Calibration" directory. All references for any measurements exported will be stored there.
+      *
+      * @copydoc cuvis_save_args_t.create_calibration_directory
+      * */
+    bool create_calibration_directory;
   };
+
   /** @brief Additional settings for exporting tiff.*/
   struct TiffArgs : public GeneralExportArgs
   {
