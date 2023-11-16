@@ -2487,7 +2487,8 @@ namespace cuvis
         allow_info_file(true),
         soft_limit(20),
         hard_limit(100),
-        max_buftime(10000)
+        max_buftime(10000),
+        create_calibration_directory(true)
   {}
 
   inline SaveArgs::operator cuvis_save_args_t() const
@@ -2503,6 +2504,7 @@ namespace cuvis
     save_args.soft_limit = soft_limit;
     save_args.hard_limit = hard_limit;
     save_args.max_buftime = max_buftime.count();
+    save_args.create_calibration_directory = create_calibration_directory;
     return save_args;
   }
 
