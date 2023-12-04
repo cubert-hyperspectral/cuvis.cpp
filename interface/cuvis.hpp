@@ -407,14 +407,13 @@ namespace cuvis
     operator cuvis_export_tiff_settings_t() const;
 
     /**
-      * @copydoc cuvis_tiff_compression_mode_t
+      * @copydoc cuvis_export_tiff_settings_t.compression_mode
       * */
     tiff_compression_mode_t compression_mode;
 
     /** 
-      * @copydoc cuvis_tiff_format_t
+      * @copydoc cuvis_export_tiff_settings_t.format
       * */
-
     tiff_format_t format;
   };
 
@@ -488,8 +487,6 @@ namespace cuvis
     operator cuvis_worker_settings_t() const;
 
     /**
-    * @brief Number of threads
-    * 
     * @copydoc cuvis_worker_settings_t.worker_count
     */
     unsigned worker_count;
@@ -504,22 +501,22 @@ namespace cuvis
     */
     bool keep_out_of_sequence;
 
-    /*
+    /**
     * @copydoc cuvis_worker_settings_t.worker_queue_size
     */
     int worker_queue_size;
 
-    /*
+    /**
     * @copydoc cuvis_worker_settings_t.worker_queue_hard_limit
     */
     int worker_queue_hard_limit;
 
-    /*
+    /**
     * @copydoc cuvis_worker_settings_t.worker_queue_soft_limit
     */
     int worker_queue_soft_limit;
 
-    /*
+    /**
     * @copydoc cuvis_worker_settings_t.can_drop
     */
     bool can_drop;
@@ -665,16 +662,45 @@ namespace cuvis
   class General
   {
   public:
+    /**
+    * @copydoc cuvis_set_log_level
+    */
     static void set_log_level(int_t lvl);
+	/**
+    * @copydoc cuvis_set_exception_locale
+    */
     static void set_exception_locale(std::string const& locale = "");
+	/**
+    * @copydoc cuvis_register_log_callback
+    */
     static void register_log_callback(std::function<void(char const*, loglevel_t)> callback, int_t min_lvl);
+	/**
+    * @copydoc cuvis_reset_log_callback
+    */
     static void reset_log_callback();
+	/**
+    * @copydoc cuvis_register_log_callback_localized
+    */
     static void register_log_callback_localized(std::function<void(wchar_t const*, loglevel_t)> callback, int_t min_lvl, std::string const& loc_id);
-    static void reset_log_callback_localized();
+    /**
+    * @copydoc cuvis_reset_log_callback_localized
+    */
+	static void reset_log_callback_localized();
+	/**
+    * @copydoc cuvis_version
+    */
     static std::string version();
+	/**
+    * @copydoc cuvis_init
+    */
     static void init(std::string const& settings_path);
-
+	/**
+    * @copydoc cuvis_register_event_callback
+    */
     static int_t register_event_callback(cpp_event_callback_t callback, int_t i_type);
+	/**
+    * @copydoc cuvis_unregister_event_callback
+    */
     static void unregister_event_callback(int_t i_handler_id);
   };
 
@@ -708,9 +734,14 @@ namespace cuvis
     /* move constructor */
     Measurement(Measurement&& measurement) = default;
 
-    /* deep copy */
+    /**
+    * @copydoc cuvis_measurement_deep_copy
+    */
     Measurement(Measurement const& source);
 
+	/**
+    * @copydoc cuvis_measurement_load
+    */
     Measurement(std::filesystem::path const& path);
 
     /** @brief Get the capabilites of the measurement which were present in the calibration during capture.
