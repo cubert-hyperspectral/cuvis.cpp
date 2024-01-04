@@ -631,7 +631,7 @@ namespace cuvis
     /** number of averages used*/
     uint32_t averages;
     /** the sensors's temperature while readout (0 if not applicable) */
-    int32_t temperature;
+    double temperature;
     /** gain value while recording */
     double gain;
     /** the timestamp (UTC) of the image readout (senor's hardware clock )*/
@@ -1138,7 +1138,7 @@ namespace cuvis
   type_wrapped get_##funname(size_t id) const                   \
   {                                                             \
     type_ifcae res;                                             \
-    chk(sdkname##_get(*_acqCont, id, &res));                    \
+    chk(sdkname##_get(*_acqCont, static_cast<int32_t>(id), &res));                    \
     return static_cast<type_wrapped>(res);                      \
   }
 
@@ -1152,7 +1152,7 @@ namespace cuvis
     ACQ_STUB_1a(hardware_queue_size, cuvis_comp_hardware_queue_size, int_t, size_t);
     ACQ_STUB_1a(hardware_queue_used, cuvis_comp_hardware_queue_used, int_t, size_t);
 
-    ACQ_STUB_1a(temperature, cuvis_comp_temperature, int_t, int);
+    ACQ_STUB_1a(temperature, cuvis_comp_temperature, double, double);
 
 #undef ACQ_STUB_1a
 
@@ -1160,7 +1160,7 @@ namespace cuvis
   Async set_##funname(size_t id, type_wrapped value) const                                                                                   \
   {                                                                                                                                          \
     CUVIS_ASYNC_CALL_RESULT async_handle;                                                                                                    \
-    chk(sdkname##_set_async(*_acqCont, id, &async_handle, static_cast<type_ifcae>(value)));                                                  \
+    chk(sdkname##_set_async(*_acqCont, static_cast<int32_t>(id), &async_handle, static_cast<type_ifcae>(value)));                                                  \
     Async async;                                                                                                                             \
     async._async = std::shared_ptr<CUVIS_ASYNC_CALL_RESULT>(new CUVIS_ASYNC_CALL_RESULT{async_handle}, [](CUVIS_ASYNC_CALL_RESULT* handle) { \
       cuvis_async_call_free(handle);                                                                                                         \
@@ -1736,7 +1736,6 @@ namespace cuvis
       CUVIS_WORKER this_worker = *_worker;
 
       auto wait_on_session_done = [this_worker]() {
-        const int poll_time_ms = 10;
         CUVIS_INT session_total;
         CUVIS_INT session_current;
         CUVIS_INT status;
@@ -1860,7 +1859,7 @@ namespace cuvis
       chk(code);
       //transforms into exception
     }
-    catch (cuvis::cuvis_sdk_exception const& ex)
+    catch (cuvis::cuvis_sdk_exception const&)
     {
       except = std::current_exception();
     }
@@ -2403,7 +2402,7 @@ namespace cuvis
   inline std::optional<Measurement> SessionFile::get_mesu(int_t frameNo, cuvis_session_item_type_t type) const
   {
     CUVIS_MESU mesu;
-    const auto ret = cuvis_session_file_get_mesu(*_session, frameNo, type, &mesu);
+    cuvis_session_file_get_mesu(*_session, frameNo, type, &mesu);
 
     if (CUVIS_HANDLE_NULL == mesu)
     {
@@ -2416,7 +2415,7 @@ namespace cuvis
   inline std::optional<Measurement> SessionFile::get_ref(int_t refNo, cuvis_reference_type_t type) const
   {
     CUVIS_MESU mesu;
-    const auto ret = cuvis_session_file_get_reference_mesu(*_session, refNo, type, &mesu);
+    cuvis_session_file_get_reference_mesu(*_session, refNo, type, &mesu);
 
     if (CUVIS_HANDLE_NULL == mesu)
     {
@@ -2470,7 +2469,7 @@ namespace cuvis
   inline GeneralExportArgs::GeneralExportArgs()
       : export_dir("."),
         channel_selection("all"),
-        spectra_multiplier(1.0),
+        spectra_multiplier(1),
         pan_scale(0.0),
         pan_interpolation_type(pan_sharpening_interpolation_type_Linear),
         pan_algorithm(pan_sharpening_algorithm_CubertMacroPixel),
@@ -2512,16 +2511,16 @@ namespace cuvis
   inline SaveArgs::operator cuvis_save_args_t() const
   {
     cuvis_save_args_t save_args;
-    save_args.allow_fragmentation = static_cast<int_t>(allow_fragmentation);
-    save_args.allow_overwrite = static_cast<int_t>(allow_overwrite);
-    save_args.allow_drop = static_cast<int_t>(allow_drop);
-    save_args.allow_session_file = static_cast<int_t>(allow_session_file);
-    save_args.allow_info_file = static_cast<int_t>(allow_info_file);
+    save_args.allow_fragmentation = static_cast<int32_t>(allow_fragmentation);
+    save_args.allow_overwrite = static_cast<int32_t>(allow_overwrite);
+    save_args.allow_drop = static_cast<int32_t>(allow_drop);
+    save_args.allow_session_file = static_cast<int32_t>(allow_session_file);
+    save_args.allow_info_file = static_cast<int32_t>(allow_info_file);
     save_args.operation_mode = operation_mode;
     save_args.fps = fps;
-    save_args.soft_limit = soft_limit;
-    save_args.hard_limit = hard_limit;
-    save_args.max_buftime = max_buftime.count();
+    save_args.soft_limit = static_cast<int32_t>(soft_limit);
+    save_args.hard_limit = static_cast<int32_t>(hard_limit);
+    save_args.max_buftime = static_cast<int32_t>(max_buftime.count());
     return save_args;
   }
 
