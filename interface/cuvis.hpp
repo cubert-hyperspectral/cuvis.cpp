@@ -1157,7 +1157,7 @@ namespace cuvis
     ACQ_STUB_1a(hardware_queue_size, cuvis_comp_hardware_queue_size, int_t, size_t);
     ACQ_STUB_1a(hardware_queue_used, cuvis_comp_hardware_queue_used, int_t, size_t);
 
-    ACQ_STUB_1a(temperature, cuvis_comp_temperature, int_t, int);
+    ACQ_STUB_1a(temperature, cuvis_comp_temperature, double_t, double_t);
 
 #undef ACQ_STUB_1a
 
@@ -2574,7 +2574,6 @@ namespace cuvis
   inline WorkerArgs::WorkerArgs()
       : worker_count(std::thread::hardware_concurrency()),
         poll_interval(std::chrono::milliseconds(5)),
-        keep_out_of_sequence(false),
         worker_queue_hard_limit(100),
         worker_queue_soft_limit(90),
         can_drop(false)
@@ -2583,10 +2582,8 @@ namespace cuvis
   inline WorkerArgs::operator cuvis_worker_settings_t() const
   {
     cuvis_worker_settings_t args;
-
     args.worker_count = worker_count;
     args.poll_interval = (std::int32_t)(poll_interval.count());
-    args.keep_out_of_sequence = (int)keep_out_of_sequence;
     args.worker_queue_hard_limit = worker_queue_hard_limit;
     args.worker_queue_soft_limit = worker_queue_soft_limit;
     args.can_drop = can_drop;
