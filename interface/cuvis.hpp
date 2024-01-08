@@ -1157,7 +1157,7 @@ namespace cuvis
     ACQ_STUB_1a(hardware_queue_size, cuvis_comp_hardware_queue_size, int_t, size_t);
     ACQ_STUB_1a(hardware_queue_used, cuvis_comp_hardware_queue_used, int_t, size_t);
 
-    ACQ_STUB_1a(temperature, cuvis_comp_temperature, double_t, int);
+    ACQ_STUB_1a(temperature, cuvis_comp_temperature, double_t, double_t);
 
 #undef ACQ_STUB_1a
 
