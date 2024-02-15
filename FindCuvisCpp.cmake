@@ -85,7 +85,7 @@ else()
             -DINCLUDE_DIRECTORIES=${CuvisCpp_INCLUDE_DIR}
             -DLINK_LIBRARIES=${CuvisCpp_LIBRARY}
 		)
-		if (NOT GET_VERSION_COMPILE_RESULT)
+		if (NOT GET_VERSION_COMPILE_RESULT AND WIN32)
 			message(FATAL_ERROR "Failed to compile and run get_version_executable")
 		endif()
 		set(${OUTPUT_VARIABLE} "${${OUTPUT_VARIABLE}}" CACHE INTERNAL "${OUTPUT_VARIABLE}")
