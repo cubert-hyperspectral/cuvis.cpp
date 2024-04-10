@@ -636,6 +636,10 @@ namespace cuvis
     double gain;
     /** the timestamp (UTC) of the image readout (senor's hardware clock )*/
     timestamp_t readout_time;
+    /** width of buffer */
+    uint32_t width;
+    /** height of buffer */
+    uint32_t height;
   };
 
 
@@ -2634,6 +2638,8 @@ namespace cuvis
     temperature = info.temperature;
     gain = info.gain;
     readout_time = std::chrono::time_point<std::chrono::system_clock>(std::chrono::milliseconds(info.readout_time));
+    width = info.width;
+    height = info.height;
   }
 
 
