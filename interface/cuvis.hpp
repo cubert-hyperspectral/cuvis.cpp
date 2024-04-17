@@ -692,7 +692,7 @@ namespace cuvis
 	/**
     * @copydoc cuvis_init
     */
-    static void init(std::string const& settings_path, int global_loglevel = 4);
+    static void init(std::string const& settings_path);
 	/**
     * @copydoc cuvis_register_event_callback
     */
@@ -2387,9 +2387,9 @@ namespace cuvis
     return std::string(version);
   }
 
-  inline void General::init(std::string const& settings_path, int global_loglevel)
+  inline void General::init(std::string const& settings_path)
   {
-    chk(cuvis_init(settings_path.c_str(), global_loglevel));
+    chk(cuvis_init(settings_path.c_str()));
     return;
   }
 
