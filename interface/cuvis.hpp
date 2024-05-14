@@ -1488,9 +1488,13 @@ namespace cuvis
         }
         break;
         case cuvis_data_type_t::data_type_string: {
-          CUVIS_CHAR value[CUVIS_LONGBUF];
-          chk(cuvis_measurement_get_data_string(*_mesu, key, value, CUVIS_LONGBUF));
+		  CUVIS_SIZE buffer_length;
+		  chk(cuvis_measurement_get_data_string_length(*_mesu, key, &buffer_length));
+			
+          CUVIS_CHAR* value = new CUVIS_CHAR[buffer_length];
+          chk(cuvis_measurement_get_data_string(*_mesu, key, value, buffer_length));
           _string_data->emplace(std::string(key), std::string(value));
+		  delete[] value;
         }
         break;
         default: // unknown or unsupported
