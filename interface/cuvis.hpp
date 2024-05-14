@@ -1402,7 +1402,7 @@ namespace cuvis
       if (meta.measurement_flags & flag)
       {
         CUVIS_CHAR value[CUVIS_MAXBUF];
-        chk(cuvis_measurement_get_data_string(*_mesu, key.c_str(), value, CUVIS_MAXBUF));
+        chk(cuvis_measurement_get_data_string(*_mesu, key.c_str(), CUVIS_MAXBUF, value));
         _meta->measurement_flags.emplace(key, value);
       }
     };
