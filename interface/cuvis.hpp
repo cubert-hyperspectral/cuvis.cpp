@@ -1518,7 +1518,7 @@ namespace cuvis
 		  chk(cuvis_measurement_get_data_string_length(*_mesu, key, &buffer_length));
 			
           CUVIS_CHAR* value = new CUVIS_CHAR[buffer_length];
-          chk(cuvis_measurement_get_data_string(*_mesu, key, value, buffer_length));
+          chk(cuvis_measurement_get_data_string(*_mesu, key, buffer_length, value));
           _string_data->emplace(std::string(key), std::string(value));
 		  delete[] value;
         }
