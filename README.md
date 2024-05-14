@@ -1,5 +1,4 @@
-![image](https://camo.githubusercontent.com/9fc396a08b84779ea0f78a4085e96bee6035fca702cd382f38cb661fa1ff1d0c/68747470733a2f2f7777772e7370656374726f6578706f2e636f6d2f77702d636f6e74656e742f75706c6f6164732f323031382f30372f637562657274323031382e706e67)
-
+![image](https://raw.githubusercontent.com/cubert-hyperspectral/cuvis.sdk/main/branding/logo/banner.png)
 
 # cuvis.cpp
 
@@ -21,13 +20,13 @@ source code page.
 
 ### Prerequisites
 
-First, you need to install the Cuvis C SDK from [here](https://cloud.cubert-gmbh.de/index.php/s/kKVtx0x2fmYqVgx).
+First, you need to install the Cuvis C SDK from [here](https://cloud.cubert-gmbh.de/index.php/s/m1WfR66TjcGl96z).
 
 ### Importing Cuvis CPP SDK via CMake
 
-First, you need to add the directory containing *FindCuvisCpp.cmake* to *CMAKE_MODULE_PATH*. Assuming you added the *cuvis.c* repository as submodule as "${CMAKE_SOURCE_DIR}/cuvis.c" you can add it like so:
+First, you need to add the directory containing *FindCuvisCpp.cmake* to *CMAKE_MODULE_PATH*. Assuming you added the *cuvis.cpp* repository as submodule as "${CMAKE_SOURCE_DIR}/cuvis.cpp" you can add it like so:
 ```
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cuvis.cxx/")
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cuvis.cpp/")
 ```
 
 Then you need to run the *find_package* function:

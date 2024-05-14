@@ -63,8 +63,12 @@ else()
 		  
 		add_dependencies(cuvis::cpp cuvis_cpp_doxygen)
 	 
-	 
 		endif()
+		
+		if (NOT WIN32)
+			set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
+		endif()
+		
   endif()		
 	
   # Function to extract version from DLL
@@ -78,7 +82,7 @@ else()
 		RUN_OUTPUT_VARIABLE  ${OUTPUT_VARIABLE}
 		LINK_LIBRARIES cuvis::cpp
         CMAKE_FLAGS
-            -DINCLUDE_DIRECTORIES=${Cuivs_INCLUDE_DIR}
+            -DINCLUDE_DIRECTORIES=${CuvisCpp_INCLUDE_DIR}
             -DLINK_LIBRARIES=${CuvisCpp_LIBRARY}
 		)
 		if (NOT GET_VERSION_COMPILE_RESULT)
