@@ -636,6 +636,10 @@ namespace cuvis
     double gain;
     /** the timestamp (UTC) of the image readout (senor's hardware clock )*/
     timestamp_t readout_time;
+    /** width of buffer */
+    uint32_t width;
+    /** height of buffer */
+    uint32_t height;
   };
 
 
@@ -688,7 +692,7 @@ namespace cuvis
 	/**
     * @copydoc cuvis_init
     */
-    static void init(std::string const& settings_path);
+    static void init(std::string const& settings_path, int global_loglevel = 4);
 	/**
     * @copydoc cuvis_register_event_callback
     */
@@ -2387,9 +2391,9 @@ namespace cuvis
     return std::string(version);
   }
 
-  inline void General::init(std::string const& settings_path)
+  inline void General::init(std::string const& settings_path, int global_loglevel)
   {
-    chk(cuvis_init(settings_path.c_str()));
+    chk(cuvis_init(settings_path.c_str(), global_loglevel));
     return;
   }
 
@@ -2638,6 +2642,8 @@ namespace cuvis
     temperature = info.temperature;
     gain = info.gain;
     readout_time = std::chrono::time_point<std::chrono::system_clock>(std::chrono::milliseconds(info.readout_time));
+    width = info.width;
+    height = info.height;
   }
 
 
