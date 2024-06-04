@@ -618,6 +618,12 @@ namespace cuvis
     * The session information of the measurement.
     */
     SessionInfo session_info;
+
+    /**
+    * The incremental frame ID given by cuvis to this measurement
+    */
+    size_t frame_id;
+
     processing_mode_t processing_mode;
     std::map<std::string, std::string> measurement_flags;
   };
@@ -640,6 +646,8 @@ namespace cuvis
     uint32_t width;
     /** height of buffer */
     uint32_t height;
+    /** The sensor frame ID given to this devices frame by the hardware or driver of the device. May reset without warning! */
+    size_t raw_frame_id;
   };
 
 
@@ -2614,6 +2622,7 @@ namespace cuvis
     assembly = std::string(meta.assembly);
     integration_time = meta.integration_time;
     averages = static_cast<decltype(averages)>(meta.averages);
+    frame_id = meta.measurement_frame_id;
     auto dist = meta.distance;
     if (dist > 0.0)
     {
@@ -2640,6 +2649,7 @@ namespace cuvis
     readout_time = std::chrono::time_point<std::chrono::system_clock>(std::chrono::milliseconds(info.readout_time));
     width = info.width;
     height = info.height;
+    raw_frame_id = info.raw_frame_id;
   }
 
 
