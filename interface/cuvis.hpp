@@ -1414,7 +1414,7 @@ namespace cuvis
       if (meta.measurement_flags & flag)
       {
         CUVIS_CHAR value[CUVIS_MAXBUF];
-        chk(cuvis_measurement_get_data_string(*_mesu, key.c_str(), value));
+        chk(cuvis_measurement_get_data_string(*_mesu, key.c_str(), CUVIS_MAXBUF, value));
         _meta->measurement_flags.emplace(key, value);
       }
     };
@@ -1526,9 +1526,13 @@ namespace cuvis
         }
         break;
         case cuvis_data_type_t::data_type_string: {
-          CUVIS_CHAR value[CUVIS_MAXBUF];
-          chk(cuvis_measurement_get_data_string(*_mesu, key, value));
+		  CUVIS_SIZE buffer_length;
+		  chk(cuvis_measurement_get_data_string_length(*_mesu, key, &buffer_length));
+			
+          CUVIS_CHAR* value = new CUVIS_CHAR[buffer_length];
+          chk(cuvis_measurement_get_data_string(*_mesu, key, buffer_length, value));
           _string_data->emplace(std::string(key), std::string(value));
+		  delete[] value;
         }
         break;
         default: // unknown or unsupported
