@@ -277,7 +277,7 @@ namespace cuvis
       *
       * @copydoc cuvis_export_general_settings_t.spectra_multiplier
       * */
-    uint8_t  spectra_multiplier;
+    uint8_t spectra_multiplier;
 
     /** @brief amount of pan-sharpening (default: 0)
       *
@@ -673,39 +673,44 @@ namespace cuvis
     * @copydoc cuvis_set_log_level
     */
     static void set_log_level(int_t lvl);
-	/**
+    /**
     * @copydoc cuvis_set_exception_locale
     */
     static void set_exception_locale(std::string const& locale = "");
-	/**
+    /**
     * @copydoc cuvis_register_log_callback
     */
     static void register_log_callback(std::function<void(char const*, loglevel_t)> callback, int_t min_lvl);
-	/**
+    /**
     * @copydoc cuvis_reset_log_callback
     */
     static void reset_log_callback();
-	/**
+    /**
     * @copydoc cuvis_register_log_callback_localized
     */
     static void register_log_callback_localized(std::function<void(wchar_t const*, loglevel_t)> callback, int_t min_lvl, std::string const& loc_id);
     /**
     * @copydoc cuvis_reset_log_callback_localized
     */
-	static void reset_log_callback_localized();
-	/**
+    static void reset_log_callback_localized();
+    /**
     * @copydoc cuvis_version
     */
     static std::string version();
-	/**
+    /**
     * @copydoc cuvis_init
     */
     static void init(std::string const& settings_path, int global_loglevel = 4);
-	/**
+    /**
+    * @copydoc cuvis_shutdown
+    */
+    static void shutdown();
+
+    /**
     * @copydoc cuvis_register_event_callback
     */
     static int_t register_event_callback(cpp_event_callback_t callback, int_t i_type);
-	/**
+    /**
     * @copydoc cuvis_unregister_event_callback
     */
     static void unregister_event_callback(int_t i_handler_id);
@@ -746,7 +751,7 @@ namespace cuvis
     */
     Measurement(Measurement const& source);
 
-	/**
+    /**
     * @copydoc cuvis_measurement_load
     */
     Measurement(std::filesystem::path const& path);
@@ -1146,12 +1151,12 @@ namespace cuvis
 #undef ACQ_STUB_0a
 #undef ACQ_STUB_0b
 
-#define ACQ_STUB_1a(funname, sdkname, type_ifcae, type_wrapped) \
-  type_wrapped get_##funname(size_t id) const                   \
-  {                                                             \
-    type_ifcae res;                                             \
-    chk(sdkname##_get(*_acqCont, static_cast<int32_t>(id), &res));                    \
-    return static_cast<type_wrapped>(res);                      \
+#define ACQ_STUB_1a(funname, sdkname, type_ifcae, type_wrapped)    \
+  type_wrapped get_##funname(size_t id) const                      \
+  {                                                                \
+    type_ifcae res;                                                \
+    chk(sdkname##_get(*_acqCont, static_cast<int32_t>(id), &res)); \
+    return static_cast<type_wrapped>(res);                         \
   }
 
     ACQ_STUB_1a(component_online, cuvis_comp_online, int_t, int);
@@ -1172,7 +1177,7 @@ namespace cuvis
   Async set_##funname(size_t id, type_wrapped value) const                                                                                   \
   {                                                                                                                                          \
     CUVIS_ASYNC_CALL_RESULT async_handle;                                                                                                    \
-    chk(sdkname##_set_async(*_acqCont, static_cast<int32_t>(id), &async_handle, static_cast<type_ifcae>(value)));                                                  \
+    chk(sdkname##_set_async(*_acqCont, static_cast<int32_t>(id), &async_handle, static_cast<type_ifcae>(value)));                            \
     Async async;                                                                                                                             \
     async._async = std::shared_ptr<CUVIS_ASYNC_CALL_RESULT>(new CUVIS_ASYNC_CALL_RESULT{async_handle}, [](CUVIS_ASYNC_CALL_RESULT* handle) { \
       cuvis_async_call_free(handle);                                                                                                         \
@@ -2405,6 +2410,8 @@ namespace cuvis
     return;
   }
 
+  inline void General::shutdown() { chk(cuvis_shutdown()); }
+
   inline SessionFile::SessionFile(std::filesystem::path const& path)
   {
     CUVIS_SESSION_FILE session;
@@ -2458,10 +2465,10 @@ namespace cuvis
 
   inline std::string SessionFile::get_hash() const
   {
-      CUVIS_CHAR id[CUVIS_MAXBUF];
-      chk(cuvis_session_file_get_hash(*_session, id));
-      std::string res(id);
-      return res;
+    CUVIS_CHAR id[CUVIS_MAXBUF];
+    chk(cuvis_session_file_get_hash(*_session, id));
+    std::string res(id);
+    return res;
   }
 
   inline CUVIS_OPERATION_MODE SessionFile::get_operation_mode() const
