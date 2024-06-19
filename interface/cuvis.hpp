@@ -396,6 +396,13 @@ namespace cuvis
       * @copydoc cuvis_save_args_t.max_buftime
       * */
     std::chrono::milliseconds max_buftime;
+
+    
+    /** The frame is saved including all results from processing, e.g. the cube.
+      *
+      * @copydoc cuvis_save_args_t.full_export
+      * */
+    bool full_export;
   };
   /** @brief Additional settings for exporting tiff.*/
   struct TiffArgs : public GeneralExportArgs
