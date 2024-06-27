@@ -397,7 +397,7 @@ namespace cuvis
       * */
     std::chrono::milliseconds max_buftime;
 
-    
+
     /** The frame is saved including all results from processing, e.g. the cube.
       *
       * @copydoc cuvis_save_args_t.full_export
@@ -1305,6 +1305,7 @@ namespace cuvis
     bool has_next_result() const;
     worker_return_t get_next_result() const;
 
+    void drop_all_queued() const;
 
     void register_worker_callback(worker_callback_t callback, unsigned concurrency = 1);
 
@@ -1538,13 +1539,13 @@ namespace cuvis
         }
         break;
         case cuvis_data_type_t::data_type_string: {
-		  CUVIS_SIZE buffer_length;
-		  chk(cuvis_measurement_get_data_string_length(*_mesu, key, &buffer_length));
-			
+          CUVIS_SIZE buffer_length;
+          chk(cuvis_measurement_get_data_string_length(*_mesu, key, &buffer_length));
+
           CUVIS_CHAR* value = new CUVIS_CHAR[buffer_length];
           chk(cuvis_measurement_get_data_string(*_mesu, key, buffer_length, value));
           _string_data->emplace(std::string(key), std::string(value));
-		  delete[] value;
+          delete[] value;
         }
         break;
         default: // unknown or unsupported
@@ -1956,6 +1957,8 @@ namespace cuvis
       _worker_poll_thread.join();
     }
   }
+
+  inline void Worker::drop_all_queued() const { chk(cuvis_worker_drop_all_queued(*_worker)); }
 
   inline Viewer::Viewer(ViewArgs const& args)
   {
