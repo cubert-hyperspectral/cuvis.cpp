@@ -1319,6 +1319,7 @@ namespace cuvis
     void stop_processing();
     void drop_all_queued();
 
+    bool is_processing_mandatory() const;
     bool is_processing() const;
 
     int32_t get_threads_busy() const;
@@ -1920,6 +1921,13 @@ namespace cuvis
   inline void Worker::stop_processing() { chk(cuvis_worker_stop(*_worker)); }
 
   inline void Worker::drop_all_queued() { chk(cuvis_worker_drop_all_queued(*_worker)); }
+
+  inline bool Worker::is_processing_mandatory() const
+  {
+    CUVIS_INT state;
+    chk(cuvis_worker_is_processing_mandatory(*_worker, &state));
+    return state != 0;
+  }
 
   inline bool Worker::is_processing() const
   {
