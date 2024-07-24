@@ -2611,6 +2611,7 @@ namespace cuvis
     save_args.soft_limit = static_cast<int32_t>(soft_limit);
     save_args.hard_limit = static_cast<int32_t>(hard_limit);
     save_args.max_buftime = static_cast<int32_t>(max_buftime.count());
+    save_args.full_export = full_export ? 1 : 0;
     return save_args;
   }
 
