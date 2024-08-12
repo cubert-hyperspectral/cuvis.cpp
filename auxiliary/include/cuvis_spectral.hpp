@@ -163,9 +163,9 @@ namespace cuvis::aux::spectral
 
       //binary mask
       //using nearest neighbor
-      cv::fillPoly(mask, vpts, cv::Scalar(255,255,255));
+      cv::fillPoly(mask, vpts, cv::Scalar(255));
 
-      std::uint16_t n = 0;                                     //counter variable
+      std::uint64_t n = 0;                                     //counter variable
       std::vector<std::double_t> sum_v(img._channels, 0.0);    //growing sum
       std::vector<std::double_t> sq_sum_v(img._channels, 0.0); //growing square sum
 
@@ -180,7 +180,7 @@ namespace cuvis::aux::spectral
             for (int z = 0; z < img._channels; z++)
             {
               //reading out value
-              auto loc_val = img._data[((y)*img._width + (x)) * img._channels + (z)];
+              auto loc_val = img._data[((y) * img._width + (x)) * img._channels + (z)];
               //adding up values
               sum_v[z] += loc_val;
               sq_sum_v[z] += loc_val * loc_val;

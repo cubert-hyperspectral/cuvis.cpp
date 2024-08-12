@@ -1,5 +1,4 @@
-![image](https://camo.githubusercontent.com/9fc396a08b84779ea0f78a4085e96bee6035fca702cd382f38cb661fa1ff1d0c/68747470733a2f2f7777772e7370656374726f6578706f2e636f6d2f77702d636f6e74656e742f75706c6f6164732f323031382f30372f637562657274323031382e706e67)
-
+![image](https://raw.githubusercontent.com/cubert-hyperspectral/cuvis.sdk/main/branding/logo/banner.png)
 
 # cuvis.cpp
 
@@ -21,7 +20,7 @@ source code page.
 
 ### Prerequisites
 
-First, you need to install the Cuvis C SDK from [here](https://cloud.cubert-gmbh.de/index.php/s/62UdmciCPjxy1pm).
+First, you need to install the Cuvis C SDK from [here](https://cloud.cubert-gmbh.de/s/q3YiPZPJe5oXziZ).
 
 ### Importing Cuvis CPP SDK via CMake
 
@@ -52,7 +51,7 @@ Please note, that linking against cuvis::cpp will enable c++17 on the target.
 We provide an additional example repository [here](https://github.com/cubert-hyperspectral/cuvis.cpp.examples),
 covering some basic applications.
 
-Further, we provide a set of example images to explore [here](https://cloud.cubert-gmbh.de/index.php/s/3oECVGWpC1NpNqC).
+Further, we provide a set of example images to explore [here](https://cloud.cubert-gmbh.de/s/SrkSRja5FKGS2Tw).
 These examples are also used by the examples mentioned above.
 
 ### Getting involved

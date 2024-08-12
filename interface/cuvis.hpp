@@ -277,7 +277,7 @@ namespace cuvis
       *
       * @copydoc cuvis_export_general_settings_t.spectra_multiplier
       * */
-    double spectra_multiplier;
+    uint8_t spectra_multiplier;
 
     /** @brief amount of pan-sharpening (default: 0)
       *
@@ -402,6 +402,11 @@ namespace cuvis
       * @copydoc cuvis_save_args_t.create_calibration_directory
       * */
     bool create_calibration_directory;
+    /** The frame is saved including all results from processing, e.g. the cube.
+      *
+      * @copydoc cuvis_save_args_t.full_export
+      * */
+    bool full_export;
   };
 
   /** @brief Additional settings for exporting tiff.*/
@@ -414,14 +419,13 @@ namespace cuvis
     operator cuvis_export_tiff_settings_t() const;
 
     /**
-      * @copydoc cuvis_tiff_compression_mode_t
+      * @copydoc cuvis_export_tiff_settings_t.compression_mode
       * */
     tiff_compression_mode_t compression_mode;
 
     /** 
-      * @copydoc cuvis_tiff_format_t
+      * @copydoc cuvis_export_tiff_settings_t.format
       * */
-
     tiff_format_t format;
   };
 
@@ -494,42 +498,26 @@ namespace cuvis
       */
     operator cuvis_worker_settings_t() const;
 
-    /**
-    * @brief Number of threads
-    * 
-    * @copydoc cuvis_worker_settings_t.worker_count
-    */
-    unsigned worker_count;
+    /** @copydoc cuvis_worker_settings_t.input_queue_size   */
+    size_t input_queue_size;
 
-    /**
-    * @copydoc cuvis_worker_settings_t.poll_interval
-    */
-    std::chrono::milliseconds poll_interval;
+    /** @copydoc cuvis_worker_settings_t.mandatory_queue_size   */
+    size_t mandatory_queue_size;
 
-    /**
-    * @copydoc cuvis_worker_settings_t.keep_out_of_sequence
-    */
-    bool keep_out_of_sequence;
+    /** @copydoc cuvis_worker_settings_t.supplementary_queue_size   */
+    size_t supplementary_queue_size;
 
-    /*
-    * @copydoc cuvis_worker_settings_t.worker_queue_size
-    */
-    int worker_queue_size;
+    /** @copydoc cuvis_worker_settings_t.output_queue_size   */
+    size_t output_queue_size;
 
-    /*
-    * @copydoc cuvis_worker_settings_t.worker_queue_hard_limit
-    */
-    int worker_queue_hard_limit;
+    /** @copydoc cuvis_worker_settings_t.can_skip_measurements   */
+    bool can_skip_measurements;
 
-    /*
-    * @copydoc cuvis_worker_settings_t.worker_queue_soft_limit
-    */
-    int worker_queue_soft_limit;
+    /** @copydoc cuvis_worker_settings_t.can_skip_supplementary_steps   */
+    bool can_skip_supplementary_steps;
 
-    /*
-    * @copydoc cuvis_worker_settings_t.can_drop
-    */
-    bool can_drop;
+    /** @copydoc cuvis_worker_settings_t.can_drop_results   */
+    bool can_drop_results;
   };
 
   /*
@@ -633,6 +621,12 @@ namespace cuvis
     * The session information of the measurement.
     */
     SessionInfo session_info;
+
+    /**
+    * The incremental frame ID given by cuvis to this measurement
+    */
+    size_t frame_id;
+
     processing_mode_t processing_mode;
     std::map<std::string, std::string> measurement_flags;
   };
@@ -646,11 +640,17 @@ namespace cuvis
     /** number of averages used*/
     uint32_t averages;
     /** the sensors's temperature while readout (0 if not applicable) */
-    int32_t temperature;
+    double temperature;
     /** gain value while recording */
     double gain;
     /** the timestamp (UTC) of the image readout (senor's hardware clock )*/
     timestamp_t readout_time;
+    /** width of buffer */
+    uint32_t width;
+    /** height of buffer */
+    uint32_t height;
+    /** The sensor frame ID given to this devices frame by the hardware or driver of the device. May reset without warning! */
+    size_t raw_frame_id;
   };
 
 
@@ -672,16 +672,50 @@ namespace cuvis
   class General
   {
   public:
+    /**
+    * @copydoc cuvis_set_log_level
+    */
     static void set_log_level(int_t lvl);
+    /**
+    * @copydoc cuvis_set_exception_locale
+    */
     static void set_exception_locale(std::string const& locale = "");
+    /**
+    * @copydoc cuvis_register_log_callback
+    */
     static void register_log_callback(std::function<void(char const*, loglevel_t)> callback, int_t min_lvl);
+    /**
+    * @copydoc cuvis_reset_log_callback
+    */
     static void reset_log_callback();
+    /**
+    * @copydoc cuvis_register_log_callback_localized
+    */
     static void register_log_callback_localized(std::function<void(wchar_t const*, loglevel_t)> callback, int_t min_lvl, std::string const& loc_id);
+    /**
+    * @copydoc cuvis_reset_log_callback_localized
+    */
     static void reset_log_callback_localized();
+    /**
+    * @copydoc cuvis_version
+    */
     static std::string version();
-    static void init(std::string const& settings_path);
+    /**
+    * @copydoc cuvis_init
+    */
+    static void init(std::string const& settings_path, int global_loglevel = 4);
+    /**
+    * @copydoc cuvis_shutdown
+    */
+    static void shutdown();
 
+    /**
+    * @copydoc cuvis_register_event_callback
+    */
     static int_t register_event_callback(cpp_event_callback_t callback, int_t i_type);
+    /**
+    * @copydoc cuvis_unregister_event_callback
+    */
     static void unregister_event_callback(int_t i_handler_id);
   };
 
@@ -715,9 +749,14 @@ namespace cuvis
     /* move constructor */
     Measurement(Measurement&& measurement) = default;
 
-    /* deep copy */
+    /**
+    * @copydoc cuvis_measurement_deep_copy
+    */
     Measurement(Measurement const& source);
 
+    /**
+    * @copydoc cuvis_measurement_load
+    */
     Measurement(std::filesystem::path const& path);
 
     /** @brief Get the capabilites of the measurement which were present in the calibration during capture.
@@ -1115,12 +1154,12 @@ namespace cuvis
 #undef ACQ_STUB_0a
 #undef ACQ_STUB_0b
 
-#define ACQ_STUB_1a(funname, sdkname, type_ifcae, type_wrapped) \
-  type_wrapped get_##funname(size_t id) const                   \
-  {                                                             \
-    type_ifcae res;                                             \
-    chk(sdkname##_get(*_acqCont, id, &res));                    \
-    return static_cast<type_wrapped>(res);                      \
+#define ACQ_STUB_1a(funname, sdkname, type_ifcae, type_wrapped)    \
+  type_wrapped get_##funname(size_t id) const                      \
+  {                                                                \
+    type_ifcae res;                                                \
+    chk(sdkname##_get(*_acqCont, static_cast<int32_t>(id), &res)); \
+    return static_cast<type_wrapped>(res);                         \
   }
 
     ACQ_STUB_1a(component_online, cuvis_comp_online, int_t, int);
@@ -1133,7 +1172,7 @@ namespace cuvis
     ACQ_STUB_1a(hardware_queue_size, cuvis_comp_hardware_queue_size, int_t, size_t);
     ACQ_STUB_1a(hardware_queue_used, cuvis_comp_hardware_queue_used, int_t, size_t);
 
-    ACQ_STUB_1a(temperature, cuvis_comp_temperature, int_t, int);
+    ACQ_STUB_1a(temperature, cuvis_comp_temperature, double, double);
 
 #undef ACQ_STUB_1a
 
@@ -1141,7 +1180,7 @@ namespace cuvis
   Async set_##funname(size_t id, type_wrapped value) const                                                                                   \
   {                                                                                                                                          \
     CUVIS_ASYNC_CALL_RESULT async_handle;                                                                                                    \
-    chk(sdkname##_set_async(*_acqCont, id, &async_handle, static_cast<type_ifcae>(value)));                                                  \
+    chk(sdkname##_set_async(*_acqCont, static_cast<int32_t>(id), &async_handle, static_cast<type_ifcae>(value)));                            \
     Async async;                                                                                                                             \
     async._async = std::shared_ptr<CUVIS_ASYNC_CALL_RESULT>(new CUVIS_ASYNC_CALL_RESULT{async_handle}, [](CUVIS_ASYNC_CALL_RESULT* handle) { \
       cuvis_async_call_free(handle);                                                                                                         \
@@ -1244,8 +1283,18 @@ namespace cuvis
       std::exception_ptr exception;
     };
 
-    using worker_callback_t = std::function<void(worker_return_t)>;
+    struct worker_state_t
+    {
+      size_t measurementsInQueue;
+      size_t sessionFilesInQueue;
+      size_t framesInQueue;
+      size_t measurementsBeingProcessed;
+      size_t resultsInQueue;
+      bool hasAcquisitionContext;
+      bool isProcessing;
+    };
 
+    using worker_callback_t = std::function<void(worker_return_t)>;
 
   public:
     Worker(WorkerArgs const& args);
@@ -1254,23 +1303,38 @@ namespace cuvis
     void set_proc_cont(ProcessingContext const* procCont);
     void set_exporter(Exporter const* exporter);
     void set_viewer(Viewer const* viewer);
-    std::future<int> set_session_file(SessionFile const* session, bool skip_dropped_frames = false);
-    std::pair<int, int> query_session_progress();
-    bool get_drop_behavior();
-    void set_drop_behavior(bool canDrop);
+
+    void ingest_measurement(Measurement const* measurement);
+    void ingest_session_file(SessionFile const* session, std::string frame_selection);
+    double query_session_progress();
+
+    bool get_can_drop_results();
+    bool get_can_skip_measurements();
+    bool get_can_skip_supplementary();
 
     bool has_next_result() const;
-    worker_return_t get_next_result() const;
+    worker_return_t get_next_result(std::chrono::milliseconds timeout) const;
+    size_t get_queue_used() const;
 
+    size_t get_input_queue_limit() const;
+    size_t get_mandatory_queue_limit() const;
+    size_t get_supplementary_queue_limit() const;
+    size_t get_output_queue_limit() const;
+
+    void start_processing();
+    void stop_processing();
+    void drop_all_queued();
+
+    bool is_processing_mandatory() const;
+    bool is_processing() const;
+
+    int32_t get_threads_busy() const;
+
+    worker_state_t get_state() const;
 
     void register_worker_callback(worker_callback_t callback, unsigned concurrency = 1);
 
     void reset_worker_callback();
-
-
-    std::pair<int32_t, int32_t> get_queue_limits() const;
-    size_t get_queue_used() const;
-    void set_queue_limits(int32_t hard_limit, int32_t soft_limit);
 
   private:
     std::shared_ptr<CUVIS_WORKER> _worker;
@@ -1383,7 +1447,7 @@ namespace cuvis
       if (meta.measurement_flags & flag)
       {
         CUVIS_CHAR value[CUVIS_MAXBUF];
-        chk(cuvis_measurement_get_data_string(*_mesu, key.c_str(), value));
+        chk(cuvis_measurement_get_data_string(*_mesu, key.c_str(), CUVIS_MAXBUF, value));
         _meta->measurement_flags.emplace(key, value);
       }
     };
@@ -1495,9 +1559,13 @@ namespace cuvis
         }
         break;
         case cuvis_data_type_t::data_type_string: {
-          CUVIS_CHAR value[CUVIS_MAXBUF];
-          chk(cuvis_measurement_get_data_string(*_mesu, key, value));
+          CUVIS_SIZE buffer_length;
+          chk(cuvis_measurement_get_data_string_length(*_mesu, key, &buffer_length));
+
+          CUVIS_CHAR* value = new CUVIS_CHAR[buffer_length];
+          chk(cuvis_measurement_get_data_string(*_mesu, key, buffer_length, value));
           _string_data->emplace(std::string(key), std::string(value));
+          delete[] value;
         }
         break;
         default: // unknown or unsupported
@@ -1708,56 +1776,42 @@ namespace cuvis
     }
   }
 
-  // Returns the number of frames processed in total via the future
-  inline std::future<int> Worker::set_session_file(SessionFile const* session, bool skip_dropped_frames)
+  inline void Worker::ingest_session_file(SessionFile const* session, std::string frame_selection)
   {
     if (session != nullptr)
     {
-      chk(cuvis_worker_set_session_file(*_worker, *session->_session, skip_dropped_frames ? 1 : 0));
-      CUVIS_WORKER this_worker = *_worker;
-
-      auto wait_on_session_done = [this_worker]() {
-        const int poll_time_ms = 10;
-        CUVIS_INT session_total;
-        CUVIS_INT session_current;
-        CUVIS_INT status;
-        do
-        {
-          status = cuvis_worker_query_session_progress(this_worker, &session_current, &session_total);
-        } while (status == status_ok);
-        return session_current;
-      };
-
-      return std::async(std::launch::deferred, wait_on_session_done);
-    }
-    else
-    {
-      chk(cuvis_worker_set_session_file(*_worker, CUVIS_HANDLE_NULL, skip_dropped_frames ? 1 : 0));
-      auto dummy = []() { return -1; };
-      return std::async(std::launch::deferred, dummy);
+      chk(cuvis_worker_ingest_session_file(*_worker, *session->_session, frame_selection.c_str()));
     }
   }
 
-  inline std::pair<int, int> Worker::query_session_progress()
+  inline double Worker::query_session_progress()
   {
-    CUVIS_INT read = 0;
-    CUVIS_INT total = 0;
-    if (cuvis_worker_query_session_progress(*_worker, &read, &total) == status_ok)
-    {
-      return std::make_pair(read, total);
-    }
-    return std::make_pair(-1, -1);
+    double out = -1;
+    chk(cuvis_worker_query_session_progress(*_worker, &out));
+    return out;
   }
 
 
-  inline bool Worker::get_drop_behavior()
+  inline bool Worker::get_can_drop_results()
   {
     CUVIS_INT canDrop;
-    chk(cuvis_worker_get_drop_behavior(*_worker, &canDrop));
+    chk(cuvis_worker_get_can_drop_results(*_worker, &canDrop));
     return bool(canDrop);
   }
 
-  inline void Worker::set_drop_behavior(bool canDrop) { chk(cuvis_worker_set_drop_behavior(*_worker, canDrop ? 1 : 0)); }
+  inline bool Worker::get_can_skip_measurements()
+  {
+    CUVIS_INT canSkip;
+    chk(cuvis_worker_get_can_skip_measurements(*_worker, &canSkip));
+    return bool(canSkip);
+  }
+
+  inline bool Worker::get_can_skip_supplementary()
+  {
+    CUVIS_INT canSkip;
+    chk(cuvis_worker_get_can_skip_supplementary(*_worker, &canSkip));
+    return bool(canSkip);
+  }
 
   inline void Worker::set_proc_cont(ProcessingContext const* procCont)
   {
@@ -1801,29 +1855,46 @@ namespace cuvis
     return hasNext != 0;
   }
 
-  inline void Worker::set_queue_limits(int32_t hard_limit, int32_t soft_limit)
+  inline size_t Worker::get_input_queue_limit() const
   {
-    chk(cuvis_worker_set_queue_limits(*_worker, hard_limit, soft_limit));
-    return;
+    CUVIS_SIZE limit;
+    chk(cuvis_worker_get_input_queue_limit(*_worker, &limit));
+    return limit;
   }
 
-  inline std::pair<int32_t, int32_t> Worker::get_queue_limits() const
+  inline size_t Worker::get_mandatory_queue_limit() const
   {
-    int32_t hard, soft;
-    chk(cuvis_worker_get_queue_limits(*_worker, &hard, &soft));
-    return std::make_pair(hard, soft);
+    CUVIS_SIZE limit;
+    chk(cuvis_worker_get_mandatory_queue_limit(*_worker, &limit));
+    return limit;
   }
+
+  inline size_t Worker::get_supplementary_queue_limit() const
+  {
+    CUVIS_SIZE limit;
+    chk(cuvis_worker_get_supplementary_queue_limit(*_worker, &limit));
+    return limit;
+  }
+
+  inline size_t Worker::get_output_queue_limit() const
+  {
+    CUVIS_SIZE limit;
+    chk(cuvis_worker_get_output_queue_limit(*_worker, &limit));
+    return limit;
+  }
+
+
   inline size_t Worker::get_queue_used() const
   {
     int_t size;
     chk(cuvis_worker_get_queue_used(*_worker, &size));
     return size;
   }
-  inline Worker::worker_return_t Worker::get_next_result() const
+  inline Worker::worker_return_t Worker::get_next_result(std::chrono::milliseconds timeout) const
   {
     CUVIS_VIEW current_view;
     CUVIS_MESU current_mesu;
-    auto code = cuvis_worker_get_next_result(*_worker, &current_mesu, &current_view, 0);
+    auto code = cuvis_worker_get_next_result(*_worker, &current_mesu, &current_view, timeout.count());
 
     std::optional<Measurement> mesu;
     std::optional<Viewer::view_data_t> view;
@@ -1841,13 +1912,60 @@ namespace cuvis
       chk(code);
       //transforms into exception
     }
-    catch (cuvis::cuvis_sdk_exception const& ex)
+    catch (cuvis::cuvis_sdk_exception const&)
     {
       except = std::current_exception();
     }
 
     return {std::move(mesu), view, except};
   }
+
+  inline void Worker::ingest_measurement(Measurement const* measurement) { chk(cuvis_worker_ingest_mesu(*_worker, *measurement->_mesu)); }
+
+  inline void Worker::start_processing() { chk(cuvis_worker_start(*_worker)); }
+
+  inline void Worker::stop_processing() { chk(cuvis_worker_stop(*_worker)); }
+
+  inline void Worker::drop_all_queued() { chk(cuvis_worker_drop_all_queued(*_worker)); }
+
+  inline bool Worker::is_processing_mandatory() const
+  {
+    CUVIS_INT state;
+    chk(cuvis_worker_is_processing_mandatory(*_worker, &state));
+    return state != 0;
+  }
+
+  inline bool Worker::is_processing() const
+  {
+    CUVIS_INT state;
+    chk(cuvis_worker_is_processing(*_worker, &state));
+    return state != 0;
+  }
+
+  inline int32_t Worker::get_threads_busy() const
+  {
+    CUVIS_INT count;
+    chk(cuvis_worker_get_threads_busy(*_worker, &count));
+    return count;
+  }
+
+  inline Worker::worker_state_t Worker::get_state() const
+  {
+    CUVIS_WORKER_STATE state;
+    chk(cuvis_worker_get_state(*_worker, &state));
+
+    Worker::worker_state_t out;
+    out.measurementsInQueue = state.measurementsInQueue;
+    out.sessionFilesInQueue = state.sessionFilesInQueue;
+    out.framesInQueue = state.framesInQueue;
+    out.measurementsBeingProcessed = state.measurementsBeingProcessed;
+    out.resultsInQueue = state.resultsInQueue;
+    out.hasAcquisitionContext = state.hasAcquisitionContext != 0;
+    out.isProcessing = state.isProcessing != 0;
+
+    return out;
+  }
+
 
   inline void Worker::register_worker_callback(worker_callback_t callback, unsigned concurrency)
   {
@@ -1861,10 +1979,10 @@ namespace cuvis
       std::deque<std::future<void>> async_tasks;
       while (_worker_poll_thread_run.load())
       {
-        if (has_next_result())
-        {
-          auto ret = get_next_result();
+        auto ret = get_next_result(std::chrono::milliseconds(1000));
 
+        if (ret.mesu.has_value())
+        {
           async_tasks.push_back(std::async(std::launch::async, callback, std::move(ret)));
 
           if (async_tasks.size() >= concurrency)
@@ -1878,7 +1996,6 @@ namespace cuvis
               }
 
               if (!_worker_poll_thread_run.load())
-
               {
                 return;
               }
@@ -1892,11 +2009,6 @@ namespace cuvis
 
             async_tasks.pop_front();
           }
-        }
-
-        else
-        {
-          std::this_thread::sleep_for(poll_time);
         }
       }
     });
@@ -2365,11 +2477,13 @@ namespace cuvis
     return std::string(version);
   }
 
-  inline void General::init(std::string const& settings_path)
+  inline void General::init(std::string const& settings_path, int global_loglevel)
   {
-    chk(cuvis_init(settings_path.c_str()));
+    chk(cuvis_init(settings_path.c_str(), global_loglevel));
     return;
   }
+
+  inline void General::shutdown() { chk(cuvis_shutdown()); }
 
   inline SessionFile::SessionFile(std::filesystem::path const& path)
   {
@@ -2384,7 +2498,7 @@ namespace cuvis
   inline std::optional<Measurement> SessionFile::get_mesu(int_t frameNo, cuvis_session_item_type_t type) const
   {
     CUVIS_MESU mesu;
-    const auto ret = cuvis_session_file_get_mesu(*_session, frameNo, type, &mesu);
+    cuvis_session_file_get_mesu(*_session, frameNo, type, &mesu);
 
     if (CUVIS_HANDLE_NULL == mesu)
     {
@@ -2397,7 +2511,7 @@ namespace cuvis
   inline std::optional<Measurement> SessionFile::get_ref(int_t refNo, cuvis_reference_type_t type) const
   {
     CUVIS_MESU mesu;
-    const auto ret = cuvis_session_file_get_reference_mesu(*_session, refNo, type, &mesu);
+    cuvis_session_file_get_reference_mesu(*_session, refNo, type, &mesu);
 
     if (CUVIS_HANDLE_NULL == mesu)
     {
@@ -2424,10 +2538,10 @@ namespace cuvis
 
   inline std::string SessionFile::get_hash() const
   {
-      CUVIS_CHAR id[CUVIS_MAXBUF];
-      chk(cuvis_session_file_get_hash(*_session, id));
-      std::string res(id);
-      return res;
+    CUVIS_CHAR id[CUVIS_MAXBUF];
+    chk(cuvis_session_file_get_hash(*_session, id));
+    std::string res(id);
+    return res;
   }
 
   inline CUVIS_OPERATION_MODE SessionFile::get_operation_mode() const
@@ -2451,7 +2565,7 @@ namespace cuvis
   inline GeneralExportArgs::GeneralExportArgs()
       : export_dir("."),
         channel_selection("all"),
-        spectra_multiplier(1.0),
+        spectra_multiplier(1),
         pan_scale(0.0),
         pan_interpolation_type(pan_sharpening_interpolation_type_Linear),
         pan_algorithm(pan_sharpening_algorithm_CubertMacroPixel),
@@ -2494,17 +2608,18 @@ namespace cuvis
   inline SaveArgs::operator cuvis_save_args_t() const
   {
     cuvis_save_args_t save_args;
-    save_args.allow_fragmentation = static_cast<int_t>(allow_fragmentation);
-    save_args.allow_overwrite = static_cast<int_t>(allow_overwrite);
-    save_args.allow_drop = static_cast<int_t>(allow_drop);
-    save_args.allow_session_file = static_cast<int_t>(allow_session_file);
-    save_args.allow_info_file = static_cast<int_t>(allow_info_file);
+    save_args.allow_fragmentation = static_cast<int32_t>(allow_fragmentation);
+    save_args.allow_overwrite = static_cast<int32_t>(allow_overwrite);
+    save_args.allow_drop = static_cast<int32_t>(allow_drop);
+    save_args.allow_session_file = static_cast<int32_t>(allow_session_file);
+    save_args.allow_info_file = static_cast<int32_t>(allow_info_file);
     save_args.operation_mode = operation_mode;
     save_args.fps = fps;
-    save_args.soft_limit = soft_limit;
-    save_args.hard_limit = hard_limit;
-    save_args.max_buftime = max_buftime.count();
+    save_args.soft_limit = static_cast<int32_t>(soft_limit);
+    save_args.hard_limit = static_cast<int32_t>(hard_limit);
+    save_args.max_buftime = static_cast<int32_t>(max_buftime.count());
     save_args.create_calibration_directory = create_calibration_directory;
+    save_args.full_export = full_export ? 1 : 0;
     return save_args;
   }
 
@@ -2549,25 +2664,27 @@ namespace cuvis
     return args;
   }
 
+
   inline WorkerArgs::WorkerArgs()
-      : worker_count(std::thread::hardware_concurrency()),
-        poll_interval(std::chrono::milliseconds(5)),
-        keep_out_of_sequence(false),
-        worker_queue_hard_limit(100),
-        worker_queue_soft_limit(90),
-        can_drop(false)
+      : input_queue_size(10),
+        mandatory_queue_size(4),
+        supplementary_queue_size(4),
+        output_queue_size(10),
+        can_skip_measurements(false),
+        can_skip_supplementary_steps(true),
+        can_drop_results(true)
   {}
 
   inline WorkerArgs::operator cuvis_worker_settings_t() const
   {
     cuvis_worker_settings_t args;
-
-    args.worker_count = worker_count;
-    args.poll_interval = (std::int32_t)(poll_interval.count());
-    args.keep_out_of_sequence = (int)keep_out_of_sequence;
-    args.worker_queue_hard_limit = worker_queue_hard_limit;
-    args.worker_queue_soft_limit = worker_queue_soft_limit;
-    args.can_drop = can_drop;
+    args.input_queue_size = input_queue_size;
+    args.mandatory_queue_size = mandatory_queue_size;
+    args.supplementary_queue_size = supplementary_queue_size;
+    args.output_queue_size = output_queue_size;
+    args.can_skip_measurements = can_skip_measurements ? 1 : 0;
+    args.can_skip_supplementary_steps = can_skip_supplementary_steps ? 1 : 0;
+    args.can_drop_results = can_drop_results ? 1 : 0;
 
     return args;
   }
@@ -2597,6 +2714,7 @@ namespace cuvis
     assembly = std::string(meta.assembly);
     integration_time = meta.integration_time;
     averages = static_cast<decltype(averages)>(meta.averages);
+    frame_id = meta.measurement_frame_id;
     auto dist = meta.distance;
     if (dist > 0.0)
     {
@@ -2621,6 +2739,9 @@ namespace cuvis
     temperature = info.temperature;
     gain = info.gain;
     readout_time = std::chrono::time_point<std::chrono::system_clock>(std::chrono::milliseconds(info.readout_time));
+    width = info.width;
+    height = info.height;
+    raw_frame_id = info.raw_frame_id;
   }
 
 
