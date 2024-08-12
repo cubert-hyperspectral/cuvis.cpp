@@ -1146,7 +1146,7 @@ namespace cuvis
     hardware_state_t get_state() const;
     std::string get_pixel_format(int id) const;
     void set_pixel_format(int id, std::string format);
-    std::vector<std::string> AcquisitionContext::get_available_pixel_formats(int_t id) const;
+    std::vector<std::string> get_available_pixel_formats(int_t id) const;
     std::optional<Measurement> get_next_measurement(std::chrono::milliseconds timeout_ms = std::chrono::milliseconds(0)) const;
     SessionInfo get_session_info() const;
     int_t get_component_count() const;
