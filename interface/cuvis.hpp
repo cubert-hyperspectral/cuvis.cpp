@@ -458,6 +458,11 @@ namespace cuvis
     std::string userplugin;
 
     /** 
+      * @copydoc cuvis_viewer_settings_t.pre_pan_sharpen_cube
+      */
+    bool pre_pan_sharpen_cube;
+
+    /** 
       * @copydoc cuvis_viewer_settings_t.complete
       */
     bool complete;
@@ -2742,7 +2747,7 @@ namespace cuvis
     return proc_args;
   }
 
-  inline ViewArgs::ViewArgs() : userplugin(), complete(false) {}
+  inline ViewArgs::ViewArgs() : userplugin(), complete(false), pre_pan_sharpen_cube(false) {}
 
   inline ViewArgs::operator cuvis_viewer_settings_t() const
   {
@@ -2751,6 +2756,7 @@ namespace cuvis
     args.pan_scale = pan_scale;
     args.pan_interpolation_type = pan_interpolation_type;
     args.pan_algorithm = pan_algorithm;
+    args.pre_pan_sharpen_cube = pre_pan_sharpen_cube;
     args.complete = complete;
     args.blend_opacity = blend_opacity;
 
