@@ -318,7 +318,7 @@ namespace cuvis
       * */
     bool add_fullscale_pan;
 
-    /** @brief Set @ref Exporter to permisive mode (default: @ref false)
+    /** @brief Set @ref Expor   ter to permisive mode (default: @ref false)
       *
       * @copydoc cuvis_export_general_settings_t.permissive
       * */
@@ -400,18 +400,12 @@ namespace cuvis
       * */
     std::chrono::milliseconds max_buftime;
 
-    /** Force creation of "Calibration" directory. All references for any measurements exported will be stored there.
-      *
-      * @copydoc cuvis_save_args_t.create_calibration_directory
-      * */
-    bool create_calibration_directory;
     /** The frame is saved including all results from processing, e.g. the cube.
       *
       * @copydoc cuvis_save_args_t.full_export
       * */
     bool full_export;
   };
-
   /** @brief Additional settings for exporting tiff.*/
   struct TiffArgs : public GeneralExportArgs
   {
@@ -2724,8 +2718,7 @@ namespace cuvis
         allow_info_file(true),
         soft_limit(20),
         hard_limit(100),
-        max_buftime(10000),
-        create_calibration_directory(true)
+        max_buftime(10000)
   {}
 
   inline SaveArgs::operator cuvis_save_args_t() const
@@ -2741,7 +2734,6 @@ namespace cuvis
     save_args.soft_limit = static_cast<int32_t>(soft_limit);
     save_args.hard_limit = static_cast<int32_t>(hard_limit);
     save_args.max_buftime = static_cast<int32_t>(max_buftime.count());
-    save_args.create_calibration_directory = create_calibration_directory;
     save_args.full_export = full_export ? 1 : 0;
     return save_args;
   }
