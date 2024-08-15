@@ -90,6 +90,9 @@ namespace cuvis
   /** @copydoc cuvis_session_info_t */
   using session_info_t = cuvis_session_info_t;
 
+  /** @copydoc cuvis_calibration_info_t */
+  using calibration_info_t = cuvis_calibration_info_t;
+
   /** @copydoc cuvis_mesu_metadata_t */
   using mesu_metadata_t = cuvis_mesu_metadata_t;
 
@@ -461,6 +464,11 @@ namespace cuvis
     std::string userplugin;
 
     /** 
+      * @copydoc cuvis_viewer_settings_t.pre_pan_sharpen_cube
+      */
+    bool pre_pan_sharpen_cube;
+
+    /** 
       * @copydoc cuvis_viewer_settings_t.complete
       */
     bool complete;
@@ -551,6 +559,54 @@ namespace cuvis
     * @copydoc cuvis_session_info_t.sequence_no
     */
     unsigned sequence_no;
+  };
+
+  /*
+  * calibration info
+  */
+  struct CalibrationInfo
+  {
+    /** Constructor to create default parameters */
+    CalibrationInfo();
+
+    /** Constructor to create session info from session*/
+    CalibrationInfo(calibration_info_t const& calib);
+
+    /** @brief convert to C - SDK settings structure 
+      *
+      * @copydoc cuvis_session_info_t
+      */
+    operator calibration_info_t() const;
+
+    /**
+    * @copydoc cuvis_calibration_info_t.name
+    */
+    std::string model_name;
+
+    /**
+    * @copydoc cuvis_calibration_info_t.serial_no
+    */
+    std::string serial_no;
+
+    /**
+    * @copydoc cuvis_calibration_info_t.calibration_date
+    */
+    timestamp_t calibration_date;
+
+    /**
+    * @copydoc cuvis_calibration_info_t.annotation_name
+    */
+    std::string annotation_name;
+
+    /**
+    * @copydoc cuvis_calibration_info_t.unique_id
+    */
+    std::string unique_id;
+
+    /**
+    * @copydoc cuvis_calibration_info_t.file_path
+    */
+    std::string file_path;
   };
 
   /**
@@ -907,6 +963,11 @@ namespace cuvis
     * @param mode Operation mode of the camera see also @ref cuvis_operation_mode_t
     */
     std::vector<capabilities_t> get_capabilities(CUVIS_OPERATION_MODE mode) const;
+
+    /**
+    * @brief get calibration infos
+    */
+    CalibrationInfo get_info() const;
     /**
     * @brief get the calibration id
     */
@@ -929,6 +990,9 @@ namespace cuvis
     std::optional<Measurement> get_mesu(int_t frameNo, cuvis_session_item_type_t type = cuvis_session_item_type_t::session_item_type_frames) const;
 
     std::optional<Measurement> get_ref(int_t refNo, cuvis_reference_type_t type) const;
+
+    common_image_t<std::uint8_t> get_thumbnail() const;
+
     /**
     * @brief get size of the SessionFile
     */
@@ -1091,6 +1155,9 @@ namespace cuvis
     AsyncMesu capture();
     void capture_queue();
     hardware_state_t get_state() const;
+    std::string get_pixel_format(int id) const;
+    void set_pixel_format(int id, std::string format);
+    std::vector<std::string> get_available_pixel_formats(int_t id) const;
     std::optional<Measurement> get_next_measurement(std::chrono::milliseconds timeout_ms = std::chrono::milliseconds(0)) const;
     SessionInfo get_session_info() const;
     int_t get_component_count() const;
@@ -1129,7 +1196,7 @@ namespace cuvis
     ACQ_STUB_0a(integration_time, cuvis_acq_cont_integration_time, double, double);
     ACQ_STUB_0a(auto_exp, cuvis_acq_cont_auto_exp, int_t, bool);
     ACQ_STUB_0a(auto_exp_comp, cuvis_acq_cont_auto_exp_comp, double, double);
-    ACQ_STUB_0a(preview_mode, cuvis_acq_cont_preview_mode, int_t, bool);
+    ACQ_STUB_0a(binning, cuvis_acq_cont_binning, int_t, bool);
     ACQ_STUB_0a(operation_mode, cuvis_acq_cont_operation_mode, cuvis_operation_mode_t, operation_mode_t);
     ACQ_STUB_0a(average, cuvis_acq_cont_average, int_t, int);
 
@@ -1143,7 +1210,7 @@ namespace cuvis
     ACQ_STUB_0b(integration_time, cuvis_acq_cont_integration_time, double, double);
     ACQ_STUB_0b(auto_exp, cuvis_acq_cont_auto_exp, int_t, bool);
     ACQ_STUB_0b(auto_exp_comp, cuvis_acq_cont_auto_exp_comp, double, double);
-    ACQ_STUB_0b(preview_mode, cuvis_acq_cont_preview_mode, int_t, bool);
+    ACQ_STUB_0b(binning, cuvis_acq_cont_binning, int_t, bool);
     ACQ_STUB_0b(operation_mode, cuvis_acq_cont_operation_mode, cuvis_operation_mode_t, operation_mode_t);
     ACQ_STUB_0b(average, cuvis_acq_cont_average, int_t, int);
 
@@ -1231,6 +1298,7 @@ namespace cuvis
     Measurement const& apply(Measurement const& mesu) const;
 
     size_t get_queue_used() const;
+    void flush();
 
   protected:
     Exporter() = default;
@@ -1626,6 +1694,13 @@ namespace cuvis
       }
     }
     return capabilities;
+  }
+
+  inline CalibrationInfo Calibration::get_info() const
+  {
+    CUVIS_CALIBRATION_INFO info;
+    chk(cuvis_calib_get_info(*_calib, &info));
+    return CalibrationInfo(info);
   }
 
   inline image_t<std::uint8_t> const* Measurement::get_thumbnail() const { return _preview_image.get(); }
@@ -2204,6 +2279,11 @@ namespace cuvis
     return size;
   }
 
+  inline void Exporter::flush()
+  {
+    chk(cuvis_exporter_flush(*_exporter));
+  }
+
   inline void Exporter::setHandle(CUVIS_EXPORTER exporter)
   {
     _exporter = std::shared_ptr<CUVIS_EXPORTER>(new CUVIS_EXPORTER{exporter}, [](CUVIS_EXPORTER* handle) {
@@ -2286,6 +2366,31 @@ namespace cuvis
     CUVIS_HARDWARE_STATE state;
     chk(cuvis_acq_cont_get_state(*_acqCont, &state));
     return state;
+  }
+
+  inline std::string AcquisitionContext::get_pixel_format(int_t id) const
+  {
+    CUVIS_CHAR format[CUVIS_MAXBUF];
+    chk(cuvis_acq_cont_get_pixel_format(*_acqCont, id, format));
+    return std::string(format);
+  }
+
+  inline void AcquisitionContext::set_pixel_format(int_t id, std::string format)
+  {
+    chk(cuvis_acq_cont_set_pixel_format(*_acqCont, id, format.c_str())); }
+
+  inline std::vector<std::string> AcquisitionContext::get_available_pixel_formats(int_t id) const
+  {
+    CUVIS_INT count = -1;
+    chk(cuvis_acq_cont_get_available_pixel_format_count(*_acqCont, id, &count));
+
+    std::vector<std::string> formats;
+    for (int i = 0; i < count; i++) {
+      CUVIS_CHAR format[CUVIS_MAXBUF];
+      chk(cuvis_acq_cont_get_pixel_format(*_acqCont, id, format));
+      formats.push_back(std::string(format));
+    }
+    return formats;
   }
 
   inline std::optional<Measurement> AcquisitionContext::get_next_measurement(std::chrono::milliseconds timeout_ms) const
@@ -2521,6 +2626,24 @@ namespace cuvis
     return Measurement(mesu);
   }
 
+  inline common_image_t<std::uint8_t> SessionFile::get_thumbnail() const
+  {
+    CUVIS_IMBUFFER thumbnail;
+    cuvis_session_file_get_thumbnail(*_session, &thumbnail);
+
+    if (thumbnail.format != cuvis_imbuffer_format_t::imbuffer_format_uint8) {
+      throw std::runtime_error("unsupported measurement data bit depth");
+    }
+
+    common_image_t<std::uint8_t> image({});
+    image._width = thumbnail.width;
+    image._height = thumbnail.height;
+    image._channels = thumbnail.channels;
+    image._data = reinterpret_cast<std::uint8_t const*>(thumbnail.raw);
+
+    return image;
+  }
+
   inline int_t SessionFile::get_size(cuvis_session_item_type_t type) const
   {
     int_t size;
@@ -2632,7 +2755,7 @@ namespace cuvis
     return proc_args;
   }
 
-  inline ViewArgs::ViewArgs() : userplugin(), complete(false) {}
+  inline ViewArgs::ViewArgs() : userplugin(), complete(false), pre_pan_sharpen_cube(false) {}
 
   inline ViewArgs::operator cuvis_viewer_settings_t() const
   {
@@ -2641,6 +2764,7 @@ namespace cuvis
     args.pan_scale = pan_scale;
     args.pan_interpolation_type = pan_interpolation_type;
     args.pan_algorithm = pan_algorithm;
+    args.pre_pan_sharpen_cube = pre_pan_sharpen_cube;
     args.complete = complete;
     args.blend_opacity = blend_opacity;
 
@@ -2700,6 +2824,30 @@ namespace cuvis
     sess.session_no = static_cast<int_t>(session_no);
     sess.sequence_no = static_cast<int_t>(sequence_no);
     return sess;
+  }
+
+  inline CalibrationInfo::CalibrationInfo()
+      : model_name("null"), serial_no("null"), calibration_date(), annotation_name("null"), unique_id("null"), file_path("null")
+  {}
+
+  inline CalibrationInfo::CalibrationInfo(calibration_info_t const& calib) : model_name(calib.model_name),
+        serial_no(calib.serial_no),
+        calibration_date(std::chrono::time_point<std::chrono::system_clock>(std::chrono::milliseconds(calib.calibration_date))),
+        annotation_name(calib.annotation_name),
+        unique_id(calib.unique_id),
+        file_path(calib.file_path)
+  {}
+
+  inline CalibrationInfo::operator cuvis::calibration_info_t() const
+  {
+    calibration_info_t calib;
+    std::strncpy(calib.model_name, model_name.c_str(), CUVIS_MAXBUF);
+    std::strncpy(calib.serial_no, serial_no.c_str(), CUVIS_MAXBUF);
+    calib.calibration_date = std::chrono::time_point_cast<std::chrono::milliseconds>(calibration_date).time_since_epoch().count();
+    std::strncpy(calib.annotation_name, annotation_name.c_str(), CUVIS_MAXBUF);
+    std::strncpy(calib.unique_id, unique_id.c_str(), CUVIS_MAXBUF);
+    std::strncpy(calib.file_path, file_path.c_str(), CUVIS_MAXBUF);
+    return calib;
   }
 
   inline MeasurementMetaData::MeasurementMetaData(mesu_metadata_t const& meta)
