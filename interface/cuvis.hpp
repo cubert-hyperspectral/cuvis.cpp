@@ -1149,9 +1149,9 @@ namespace cuvis
     AsyncMesu capture();
     void capture_queue();
     hardware_state_t get_state() const;
-    std::string get_pixel_format(int id) const;
-    void set_pixel_format(int id, std::string format);
-    std::vector<std::string> get_available_pixel_formats(int_t id) const;
+    std::string get_component_pixel_format(int id) const;
+    Async set_component_pixel_format(int id, std::string format);
+    std::vector<std::string> get_component_available_pixel_formats(int_t id) const;
     std::optional<Measurement> get_next_measurement(std::chrono::milliseconds timeout_ms = std::chrono::milliseconds(0)) const;
     SessionInfo get_session_info() const;
     int_t get_component_count() const;
@@ -2362,26 +2362,35 @@ namespace cuvis
     return state;
   }
 
-  inline std::string AcquisitionContext::get_pixel_format(int_t id) const
+  inline std::string AcquisitionContext::get_component_pixel_format(int_t id) const
   {
     CUVIS_CHAR format[CUVIS_MAXBUF];
-    chk(cuvis_acq_cont_get_pixel_format(*_acqCont, id, format));
+    chk(cuvis_comp_pixel_format_get(*_acqCont, id, format));
     return std::string(format);
   }
 
-  inline void AcquisitionContext::set_pixel_format(int_t id, std::string format)
+  inline Async AcquisitionContext::set_component_pixel_format(int_t id, std::string format)
   {
-    chk(cuvis_acq_cont_set_pixel_format(*_acqCont, id, format.c_str())); }
+    CUVIS_ASYNC_CALL_RESULT async_handle;
+    chk(cuvis_comp_pixel_format_set_async(*_acqCont, &async_handle, id, format.c_str()));
+    Async async;
+    async._async = std::shared_ptr<CUVIS_ASYNC_CALL_RESULT>(new CUVIS_ASYNC_CALL_RESULT{async_handle}, [](CUVIS_ASYNC_CALL_RESULT* handle) {
+      cuvis_async_call_free(handle);
+      delete handle;
+    });
+    return async;
+  }
 
-  inline std::vector<std::string> AcquisitionContext::get_available_pixel_formats(int_t id) const
+  inline std::vector<std::string> AcquisitionContext::get_component_available_pixel_formats(int_t id) const
   {
     CUVIS_INT count = -1;
-    chk(cuvis_acq_cont_get_available_pixel_format_count(*_acqCont, id, &count));
+    chk(cuvis_comp_available_pixel_format_count_get(*_acqCont, id, &count));
 
     std::vector<std::string> formats;
-    for (int i = 0; i < count; i++) {
+    for (int i = 0; i < count; i++)
+    {
       CUVIS_CHAR format[CUVIS_MAXBUF];
-      chk(cuvis_acq_cont_get_pixel_format(*_acqCont, id, format));
+      chk(cuvis_comp_available_pixel_format_get(*_acqCont, id, i, format));
       formats.push_back(std::string(format));
     }
     return formats;
