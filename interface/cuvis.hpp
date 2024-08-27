@@ -2365,23 +2365,24 @@ namespace cuvis
   inline std::string AcquisitionContext::get_pixel_format(int_t id) const
   {
     CUVIS_CHAR format[CUVIS_MAXBUF];
-    chk(cuvis_acq_cont_get_pixel_format(*_acqCont, id, format));
+    chk(cuvis_comp_pixel_format_get(*_acqCont, id, format));
     return std::string(format);
   }
 
   inline void AcquisitionContext::set_pixel_format(int_t id, std::string format)
   {
-    chk(cuvis_acq_cont_set_pixel_format(*_acqCont, id, format.c_str())); }
+    chk(cuvis_comp_pixel_format_set(*_acqCont, id, format.c_str())); }
 
   inline std::vector<std::string> AcquisitionContext::get_available_pixel_formats(int_t id) const
   {
     CUVIS_INT count = -1;
-    chk(cuvis_acq_cont_get_available_pixel_format_count(*_acqCont, id, &count));
+    chk(cuvis_comp_available_pixel_format_count_get(*_acqCont, id, &count));
 
     std::vector<std::string> formats;
-    for (int i = 0; i < count; i++) {
+    for (int i = 0; i < count; i++)
+    {
       CUVIS_CHAR format[CUVIS_MAXBUF];
-      chk(cuvis_acq_cont_get_pixel_format(*_acqCont, id, format));
+      chk(cuvis_comp_available_pixel_format_get(*_acqCont, id, i, format));
       formats.push_back(std::string(format));
     }
     return formats;
