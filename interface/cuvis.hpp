@@ -701,6 +701,11 @@ namespace cuvis
     uint32_t height;
     /** The sensor frame ID given to this devices frame by the hardware or driver of the device. May reset without warning! */
     size_t raw_frame_id;
+    /** The sensor read-out pixel format used by this device. Informs how many bits per pixel are available. */
+    std::string pixel_format;
+    /** Is binning mode active. Binning combines 2x2 pixel areas to one pixel, effectively reducing the image resolution to 1/4.
+     *  This speeds up data transfers and processing and reduces measurement file size. */
+    bool binning;
   };
 
 
@@ -1508,9 +1513,21 @@ namespace cuvis
     auto get_flag = [&](CUVIS_FLAGS flag, std::string const& key) -> void {
       if (meta.measurement_flags & flag)
       {
-        CUVIS_CHAR value[CUVIS_MAXBUF];
-        chk(cuvis_measurement_get_data_string(*_mesu, key.c_str(), CUVIS_MAXBUF, value));
+        CUVIS_SIZE buffer_length;
+        chk(cuvis_measurement_get_data_string_length(*_mesu, key.c_str(), &buffer_length));
+
+        CUVIS_CHAR* value = new CUVIS_CHAR[buffer_length];
+        chk(cuvis_measurement_get_data_string(*_mesu, key.c_str(), buffer_length, value));
+        //_string_data->emplace(std::string(key), std::string(value));
+
+
+
+
+        //CUVIS_CHAR value[CUVIS_MAXBUF];
+        //chk(cuvis_measurement_get_data_string(*_mesu, key.c_str(), CUVIS_MAXBUF, value));
         _meta->measurement_flags.emplace(key, value);
+        
+        delete[] value;
       }
     };
 
@@ -2891,6 +2908,8 @@ namespace cuvis
     width = info.width;
     height = info.height;
     raw_frame_id = info.raw_frame_id;
+    pixel_format = std::string(info.pixel_format);
+    binning = (info.binning != 0);
   }
 
 
