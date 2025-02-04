@@ -1166,6 +1166,7 @@ namespace cuvis
     void set_queue_size(int_t size);
 
     bool has_next_measurement() const;
+    bool is_ready() const;
 
     void register_state_change_callback(state_callback_t callback, bool output_initial_state = true);
     void reset_state_change_callback();
@@ -2427,6 +2428,12 @@ namespace cuvis
     }
 
     throw cuvis_sdk_exception(cuvis_get_last_error_msg(), cuvis_get_last_error_msg_localized());
+  }
+
+  inline bool AcquisitionContext::is_ready() const {
+    int_t ready;
+    chk(cuvis_acq_cont_ready_get(*_acqCont, &ready));
+    return 1 == ready;
   }
 
   inline bool AcquisitionContext::has_next_measurement() const
