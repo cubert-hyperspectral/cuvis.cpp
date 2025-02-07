@@ -1166,6 +1166,7 @@ namespace cuvis
     void set_queue_size(int_t size);
 
     bool has_next_measurement() const;
+    bool is_ready() const;
 
     void register_state_change_callback(state_callback_t callback, bool output_initial_state = true);
     void reset_state_change_callback();
@@ -1522,11 +1523,10 @@ namespace cuvis
 
 
 
-
         //CUVIS_CHAR value[CUVIS_MAXBUF];
         //chk(cuvis_measurement_get_data_string(*_mesu, key.c_str(), CUVIS_MAXBUF, value));
         _meta->measurement_flags.emplace(key, value);
-        
+
         delete[] value;
       }
     };
@@ -2290,10 +2290,7 @@ namespace cuvis
     return size;
   }
 
-  inline void Exporter::flush()
-  {
-    chk(cuvis_exporter_flush(*_exporter));
-  }
+  inline void Exporter::flush() { chk(cuvis_exporter_flush(*_exporter)); }
 
   inline void Exporter::setHandle(CUVIS_EXPORTER exporter)
   {
@@ -2429,11 +2426,18 @@ namespace cuvis
     throw cuvis_sdk_exception(cuvis_get_last_error_msg(), cuvis_get_last_error_msg_localized());
   }
 
+  inline bool AcquisitionContext::is_ready() const
+  {
+    int_t ready;
+    chk(cuvis_acq_cont_ready_get(*_acqCont, &ready));
+    return ready != 0;
+  }
+
   inline bool AcquisitionContext::has_next_measurement() const
   {
     int_t has_next;
     chk(cuvis_acq_cont_has_next_measurement(*_acqCont, &has_next));
-    return 1 == has_next;
+    return has_next != 0;
   }
 
 
@@ -2651,7 +2655,8 @@ namespace cuvis
     CUVIS_IMBUFFER thumbnail;
     cuvis_session_file_get_thumbnail(*_session, &thumbnail);
 
-    if (thumbnail.format != cuvis_imbuffer_format_t::imbuffer_format_uint8) {
+    if (thumbnail.format != cuvis_imbuffer_format_t::imbuffer_format_uint8)
+    {
       throw std::runtime_error("unsupported measurement data bit depth");
     }
 
@@ -2848,7 +2853,8 @@ namespace cuvis
       : model_name("null"), serial_no("null"), calibration_date(), annotation_name("null"), unique_id("null"), file_path("null")
   {}
 
-  inline CalibrationInfo::CalibrationInfo(calibration_info_t const& calib) : model_name(calib.model_name),
+  inline CalibrationInfo::CalibrationInfo(calibration_info_t const& calib)
+      : model_name(calib.model_name),
         serial_no(calib.serial_no),
         calibration_date(std::chrono::time_point<std::chrono::system_clock>(std::chrono::milliseconds(calib.calibration_date))),
         annotation_name(calib.annotation_name),
