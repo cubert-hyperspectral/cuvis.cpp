@@ -898,7 +898,19 @@ namespace cuvis
     * */
     void refresh();
 
-  private:
+    /** @brief Expert: Return the current handle of the wrapper class */
+    CUVIS_MESU get_handle() const;
+    /** @brief Expert: Create a copy of the current handle of the wrapper class and return it.
+    * This handle needs to be also freed before the resource will be released by the sdk.
+    */
+    CUVIS_MESU get_handle_copy() const;
+
+  public:
+      /** @brief Expert: Create a wrapper class around a handle.
+    * This only allowed once per handle, otherwise the handle could be freed before all instances of the wrapper class are deleted. 
+    * This can be useful if a previously a handle has been copied and now should be wrapped at another place in a program.
+    * Most of the time this is not necesarry and the wrapper class can be copied just as well
+    */
     Measurement(CUVIS_MESU handle);
 
 
@@ -972,6 +984,21 @@ namespace cuvis
     */
     std::string get_id() const;
 
+    /** @brief Expert: Return the current handle of the wrapper class */
+    CUVIS_CALIB get_handle() const;
+    /** @brief Expert: Create a copy of the current handle of the wrapper class and return it.
+    * This handle needs to be also freed before the resource will be released by the sdk.
+    */
+    CUVIS_CALIB get_handle_copy() const;
+
+  public:
+      /** @brief Expert: Create a wrapper class around a handle.
+    * This only allowed once per handle, otherwise the handle could be freed before all instances of the wrapper class are deleted. 
+    * This can be useful if a previously a handle has been copied and now should be wrapped at another place in a program.
+    * Most of the time this is not necesarry and the wrapper class can be copied just as well
+    */
+    Calibration(CUVIS_CALIB handle);
+
   private:
     std::shared_ptr<CUVIS_CALIB> _calib;
   };
@@ -1009,6 +1036,21 @@ namespace cuvis
     * @brief get operation mode of the session
     */
     CUVIS_OPERATION_MODE get_operation_mode() const;
+
+    /** @brief Expert: Return the current handle of the wrapper class */
+    CUVIS_SESSION_FILE get_handle() const;
+    /** @brief Expert: Create a copy of the current handle of the wrapper class and return it.
+    * This handle needs to be also freed before the resource will be released by the sdk.
+    */
+    CUVIS_SESSION_FILE get_handle_copy() const;
+
+  public:
+      /** @brief Expert: Create a wrapper class around a handle.
+    * This only allowed once per handle, otherwise the handle could be freed before all instances of the wrapper class are deleted. 
+    * This can be useful if a previously a handle has been copied and now should be wrapped at another place in a program.
+    * Most of the time this is not necesarry and the wrapper class can be copied just as well
+    */
+    SessionFile(CUVIS_SESSION_FILE handle);
 
   private:
     std::shared_ptr<CUVIS_SESSION_FILE> _session;
@@ -1089,6 +1131,21 @@ namespace cuvis
     * @brief get the calibration id of the procession context
     */
     std::string get_calib_id() const;
+
+    /** @brief Expert: Return the current handle of the wrapper class */
+    CUVIS_PROC_CONT get_handle() const;
+    /** @brief Expert: Create a copy of the current handle of the wrapper class and return it.
+    * This handle needs to be also freed before the resource will be released by the sdk.
+    */
+    CUVIS_PROC_CONT get_handle_copy() const;
+
+  public:
+      /** @brief Expert: Create a wrapper class around a handle.
+    * This only allowed once per handle, otherwise the handle could be freed before all instances of the wrapper class are deleted. 
+    * This can be useful if a previously a handle has been copied and now should be wrapped at another place in a program.
+    * Most of the time this is not necesarry and the wrapper class can be copied just as well
+    */
+    ProcessingContext(CUVIS_PROC_CONT handle);
 
   private:
     std::shared_ptr<CUVIS_PROC_CONT> _procCont;
@@ -1260,7 +1317,21 @@ namespace cuvis
     ACQ_STUB_1b(component_integration_time_factor, cuvis_comp_integration_time_factor, double, double);
 
 #undef ACQ_STUB_1b
+
+    /** @brief Expert: Return the current handle of the wrapper class */
     CUVIS_ACQ_CONT get_handle() const;
+    /** @brief Expert: Create a copy of the current handle of the wrapper class and return it.
+    * This handle needs to be also freed before the resource will be released by the sdk.
+    */
+    CUVIS_ACQ_CONT get_handle_copy() const;
+
+  public:
+      /** @brief Expert: Create a wrapper class around a handle.
+    * This only allowed once per handle, otherwise the handle could be freed before all instances of the wrapper class are deleted. 
+    * This can be useful if a previously a handle has been copied and now should be wrapped at another place in a program.
+    * Most of the time this is not necesarry and the wrapper class can be copied just as well
+    */
+    AcquisitionContext(CUVIS_ACQ_CONT handle);
 
   private:
     std::shared_ptr<CUVIS_ACQ_CONT> _acqCont;
@@ -1282,6 +1353,21 @@ namespace cuvis
   public:
     Viewer(ViewArgs const& args);
     view_data_t apply(Measurement const& mesu);
+
+    /** @brief Expert: Return the current handle of the wrapper class */
+    CUVIS_VIEWER get_handle() const;
+    /** @brief Expert: Create a copy of the current handle of the wrapper class and return it.
+    * This handle needs to be also freed before the resource will be released by the sdk.
+    */
+    CUVIS_VIEWER get_handle_copy() const;
+
+  public:
+      /** @brief Expert: Create a wrapper class around a handle.
+    * This only allowed once per handle, otherwise the handle could be freed before all instances of the wrapper class are deleted. 
+    * This can be useful if a previously a handle has been copied and now should be wrapped at another place in a program.
+    * Most of the time this is not necesarry and the wrapper class can be copied just as well
+    */
+    Viewer(CUVIS_VIEWER handle);
 
   private:
     std::shared_ptr<CUVIS_VIEWER> _viewer;
@@ -1532,7 +1618,6 @@ namespace cuvis
     };
 
     get_flag(CUVIS_MESU_FLAG_OVERILLUMINATED, CUVIS_MESU_FLAG_OVERILLUMINATED_KEY);
-    get_flag(CUVIS_MESU_FLAG_PAN_OVERILLUMINATED, CUVIS_MESU_FLAG_PAN_OVERILLUMINATED_KEY);
     get_flag(CUVIS_MESU_FLAG_POOR_REFERENCE, CUVIS_MESU_FLAG_POOR_REFERENCE_KEY);
     get_flag(CUVIS_MESU_FLAG_POOR_WHITE_BALANCING, CUVIS_MESU_FLAG_POOR_WHITE_BALANCING_KEY);
     get_flag(CUVIS_MESU_FLAG_DARK_INTTIME, CUVIS_MESU_FLAG_DARK_INTTIME_KEY);
