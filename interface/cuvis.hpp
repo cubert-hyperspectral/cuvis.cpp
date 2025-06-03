@@ -1486,7 +1486,7 @@ namespace cuvis
 
     worker_state_t get_state() const;
 
-    void register_worker_callback(worker_callback_t callback, unsigned concurrency = 1);
+    void register_worker_callback(worker_callback_t callback, unsigned concurrency = 1, size_t measurement_timeout_ms = 1000);
 
     void reset_worker_callback();
 
@@ -2138,8 +2138,7 @@ namespace cuvis
     return out;
   }
 
-
-  inline void Worker::register_worker_callback(worker_callback_t callback, unsigned concurrency)
+  inline void Worker::register_worker_callback(worker_callback_t callback, unsigned concurrency, size_t measurement_timeout_ms)
   {
     reset_worker_callback();
 
@@ -2147,11 +2146,12 @@ namespace cuvis
 
     _worker_poll_thread_run = true;
 
-    _worker_poll_thread = std::thread([this, callback, concurrency] {
+    _worker_poll_thread = std::thread([this, callback, concurrency, measurement_timeout_ms]
+                                      {
       std::deque<std::future<void>> async_tasks;
       while (_worker_poll_thread_run.load())
       {
-        auto ret = get_next_result(std::chrono::milliseconds(1000));
+        auto ret = get_next_result(std::chrono::milliseconds(measurement_timeout_ms));
 
         if (ret.mesu.has_value())
         {
