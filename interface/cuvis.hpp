@@ -828,8 +828,6 @@ namespace cuvis
      */
     gps_data_t const *get_gps() const { return _gps_data.get(); }
 
-    inline CUVIS_HANDLE get_handle() const {return *_mesu;}
-
     /**  @brief Get image data from measurement
      *
      * Return image data from measurement.
