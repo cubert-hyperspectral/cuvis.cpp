@@ -906,7 +906,7 @@ namespace cuvis
     CUVIS_MESU get_handle_copy() const;
 
   public:
-      /** @brief Expert: Create a wrapper class around a handle.
+    /** @brief Expert: Create a wrapper class around a handle.
     * This only allowed once per handle, otherwise the handle could be freed before all instances of the wrapper class are deleted. 
     * This can be useful if a previously a handle has been copied and now should be wrapped at another place in a program.
     * Most of the time this is not necesarry and the wrapper class can be copied just as well
@@ -992,7 +992,7 @@ namespace cuvis
     CUVIS_CALIB get_handle_copy() const;
 
   public:
-      /** @brief Expert: Create a wrapper class around a handle.
+    /** @brief Expert: Create a wrapper class around a handle.
     * This only allowed once per handle, otherwise the handle could be freed before all instances of the wrapper class are deleted. 
     * This can be useful if a previously a handle has been copied and now should be wrapped at another place in a program.
     * Most of the time this is not necesarry and the wrapper class can be copied just as well
@@ -1045,7 +1045,7 @@ namespace cuvis
     CUVIS_SESSION_FILE get_handle_copy() const;
 
   public:
-      /** @brief Expert: Create a wrapper class around a handle.
+    /** @brief Expert: Create a wrapper class around a handle.
     * This only allowed once per handle, otherwise the handle could be freed before all instances of the wrapper class are deleted. 
     * This can be useful if a previously a handle has been copied and now should be wrapped at another place in a program.
     * Most of the time this is not necesarry and the wrapper class can be copied just as well
@@ -1140,7 +1140,7 @@ namespace cuvis
     CUVIS_PROC_CONT get_handle_copy() const;
 
   public:
-      /** @brief Expert: Create a wrapper class around a handle.
+    /** @brief Expert: Create a wrapper class around a handle.
     * This only allowed once per handle, otherwise the handle could be freed before all instances of the wrapper class are deleted. 
     * This can be useful if a previously a handle has been copied and now should be wrapped at another place in a program.
     * Most of the time this is not necesarry and the wrapper class can be copied just as well
@@ -1326,7 +1326,7 @@ namespace cuvis
     CUVIS_ACQ_CONT get_handle_copy() const;
 
   public:
-      /** @brief Expert: Create a wrapper class around a handle.
+    /** @brief Expert: Create a wrapper class around a handle.
     * This only allowed once per handle, otherwise the handle could be freed before all instances of the wrapper class are deleted. 
     * This can be useful if a previously a handle has been copied and now should be wrapped at another place in a program.
     * Most of the time this is not necesarry and the wrapper class can be copied just as well
@@ -1362,7 +1362,7 @@ namespace cuvis
     CUVIS_VIEWER get_handle_copy() const;
 
   public:
-      /** @brief Expert: Create a wrapper class around a handle.
+    /** @brief Expert: Create a wrapper class around a handle.
     * This only allowed once per handle, otherwise the handle could be freed before all instances of the wrapper class are deleted. 
     * This can be useful if a previously a handle has been copied and now should be wrapped at another place in a program.
     * Most of the time this is not necesarry and the wrapper class can be copied just as well
@@ -1545,6 +1545,7 @@ namespace cuvis
 
     refresh();
   }
+
   inline Measurement::Measurement(CUVIS_MESU handle)
       : _gps_data(std::make_shared<gps_data_t>()),
         _string_data(std::make_shared<string_data_t>()),
@@ -1762,6 +1763,15 @@ namespace cuvis
     return res;
   }
 
+  inline CUVIS_MESU Measurement::get_handle() const { return *_mesu; }
+
+  inline CUVIS_MESU Measurement::get_handle_copy() const
+  {
+    CUVIS_MESU new_handle;
+    chk(cuvis_measurement_copy_handle(*_mesu, &new_handle));
+    return new_handle;
+  }
+
   inline std::string Calibration::get_id() const
   {
     CUVIS_CHAR id[CUVIS_MAXBUF];
@@ -1827,6 +1837,23 @@ namespace cuvis
       delete handle;
     });
   }
+
+  inline Calibration::Calibration(CUVIS_CALIB handle)
+      : _calib(std::shared_ptr<CUVIS_CALIB>(new CUVIS_CALIB{handle}, [](CUVIS_CALIB* handle) {
+          cuvis_calib_free(handle);
+          delete handle;
+        }))
+  {}
+
+  inline CUVIS_CALIB Calibration::get_handle() const { return *_calib; }
+
+  inline CUVIS_CALIB Calibration::get_handle_copy() const
+  {
+    CUVIS_CALIB new_handle;
+    chk(cuvis_calib_copy_handle(*_calib, &new_handle));
+    return new_handle;
+  }
+
   inline ProcessingContext::ProcessingContext(Calibration const& calib)
   {
     CUVIS_PROC_CONT procCont;
@@ -1856,6 +1883,13 @@ namespace cuvis
       delete handle;
     });
   }
+
+  inline ProcessingContext::ProcessingContext(CUVIS_CALIB handle)
+      : _procCont(std::shared_ptr<CUVIS_PROC_CONT>(new CUVIS_PROC_CONT{handle}, [](CUVIS_PROC_CONT* handle) {
+          cuvis_proc_cont_free(handle);
+          delete handle;
+        }))
+  {}
 
   inline Measurement& ProcessingContext::apply(Measurement& mesu) const
   {
@@ -1924,6 +1958,15 @@ namespace cuvis
   }
 
   inline ProcessingArgs const& ProcessingContext::get_processingArgs() const { return _procArgs; }
+
+  inline CUVIS_PROC_CONT ProcessingContext::get_handle() const { return *_procCont; }
+
+  inline CUVIS_PROC_CONT ProcessingContext::get_handle_copy() const
+  {
+    CUVIS_PROC_CONT new_handle;
+    chk(cuvis_proc_cont_copy_handle(*_procCont, &new_handle));
+    return new_handle;
+  }
 
   inline Worker::Worker(WorkerArgs const& args) : _worker_poll_thread_run(false)
 
@@ -2205,6 +2248,22 @@ namespace cuvis
     });
   }
 
+  inline Viewer::Viewer(CUVIS_VIEWER handle)
+      : _viewer(std::shared_ptr<CUVIS_VIEWER>(new CUVIS_VIEWER{handle}, [](CUVIS_VIEWER* handle) {
+          cuvis_viewer_free(handle);
+          delete handle;
+        }))
+  {}
+
+  inline CUVIS_VIEWER Viewer::get_handle() const { return *_viewer; }
+
+  inline CUVIS_VIEWER Viewer::get_handle_copy() const
+  {
+    CUVIS_VIEWER new_handle;
+    chk(cuvis_viewer_copy_handle(*_viewer, &new_handle));
+    return new_handle;
+  }
+
   inline Viewer::view_data_t Viewer::apply(Measurement const& mesu)
   {
     CUVIS_VIEW current_view;
@@ -2278,8 +2337,6 @@ namespace cuvis
   }
   inline AcquisitionContext::~AcquisitionContext() { reset_state_change_callback(); }
 
-  inline CUVIS_ACQ_CONT AcquisitionContext::get_handle() const { return *_acqCont; }
-
   inline AcquisitionContext::AcquisitionContext(Calibration const& calib) : _state_poll_thread_run(false)
   {
     CUVIS_ACQ_CONT acqCont;
@@ -2299,6 +2356,22 @@ namespace cuvis
       cuvis_acq_cont_free(handle);
       delete handle;
     });
+  }
+
+  inline AcquisitionContext::AcquisitionContext(CUVIS_VIEWER handle)
+      : _acqCont(std::shared_ptr<CUVIS_ACQ_CONT>(new CUVIS_ACQ_CONT{handle}, [](CUVIS_ACQ_CONT* handle) {
+          cuvis_acq_cont_free(handle);
+          delete handle;
+        }))
+  {}
+
+  inline CUVIS_ACQ_CONT AcquisitionContext::get_handle() const { return *_acqCont; }
+
+  inline CUVIS_ACQ_CONT AcquisitionContext::get_handle_copy() const
+  {
+    CUVIS_ACQ_CONT new_handle;
+    chk(cuvis_acq_cont_copy_handle(*_acqCont, &new_handle));
+    return new_handle;
   }
 
 
@@ -2783,6 +2856,15 @@ namespace cuvis
     CUVIS_OPERATION_MODE op_mode;
     chk(cuvis_session_file_get_operation_mode(*_session, &op_mode));
     return op_mode;
+  }
+
+  inline CUVIS_SESSION_FILE SessionFile::get_handle() const { return *_session; }
+
+  inline CUVIS_SESSION_FILE SessionFile::get_handle_copy() const
+  {
+    CUVIS_SESSION_FILE new_handle;
+    chk(cuvis_session_file_copy_handle(*_session, &new_handle));
+    return new_handle;
   }
 
   template <typename data_t>
