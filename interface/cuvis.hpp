@@ -466,6 +466,11 @@ namespace cuvis
       * @copydoc cuvis_viewer_settings_t.complete
       */
     bool complete;
+
+    /** 
+      * @copydoc cuvis_viewer_settings_t.pan_failback
+      */
+    bool pan_failback;
   };
   /** @brief processing arguments */
   struct ProcessingArgs
@@ -2808,6 +2813,7 @@ namespace cuvis
     args.pre_pan_sharpen_cube = pre_pan_sharpen_cube;
     args.complete = complete;
     args.blend_opacity = blend_opacity;
+    args.pan_failback = pan_failback ? 1 : 0;
 
     return args;
   }
@@ -2815,6 +2821,7 @@ namespace cuvis
   {
     cuvis_export_view_settings_t args;
     args.userplugin = userplugin.c_str();
+    args.pan_failback = pan_failback ? 1 : 0;
 
     return args;
   }
