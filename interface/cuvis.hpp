@@ -601,6 +601,26 @@ namespace cuvis
     * @copydoc cuvis_calibration_info_t.file_path
     */
     std::string file_path;
+
+    /**
+    * @copydoc cuvis_calibration_info_t.cube_width
+    */
+    uint32_t cube_width;
+
+    /**
+    * @copydoc cuvis_calibration_info_t.cube_height
+    */
+    uint32_t cube_height;
+
+    /**
+    * @copydoc cuvis_calibration_info_t.cube_channels
+    */
+    uint32_t cube_channels;
+
+    /**
+    * @copydoc cuvis_calibration_info_t.cube_wavelengths
+    */
+    uint32_t const* cube_wavelengths;
   };
 
   /**
@@ -703,9 +723,8 @@ namespace cuvis
     size_t raw_frame_id;
     /** The sensor read-out pixel format used by this device. Informs how many bits per pixel are available. */
     std::string pixel_format;
-    /** Is binning mode active. Binning combines 2x2 pixel areas to one pixel, effectively reducing the image resolution to 1/4.
-     *  This speeds up data transfers and processing and reduces measurement file size. */
-    bool binning;
+    /** the sensors's real integration time (exposure time in ms) */
+    double integration_time;
   };
 
 
@@ -1196,7 +1215,6 @@ namespace cuvis
     ACQ_STUB_0a(integration_time, cuvis_acq_cont_integration_time, double, double);
     ACQ_STUB_0a(auto_exp, cuvis_acq_cont_auto_exp, int_t, bool);
     ACQ_STUB_0a(auto_exp_comp, cuvis_acq_cont_auto_exp_comp, double, double);
-    ACQ_STUB_0a(binning, cuvis_acq_cont_binning, int_t, bool);
     ACQ_STUB_0a(operation_mode, cuvis_acq_cont_operation_mode, cuvis_operation_mode_t, operation_mode_t);
     ACQ_STUB_0a(average, cuvis_acq_cont_average, int_t, int);
 
@@ -1210,7 +1228,6 @@ namespace cuvis
     ACQ_STUB_0b(integration_time, cuvis_acq_cont_integration_time, double, double);
     ACQ_STUB_0b(auto_exp, cuvis_acq_cont_auto_exp, int_t, bool);
     ACQ_STUB_0b(auto_exp_comp, cuvis_acq_cont_auto_exp_comp, double, double);
-    ACQ_STUB_0b(binning, cuvis_acq_cont_binning, int_t, bool);
     ACQ_STUB_0b(operation_mode, cuvis_acq_cont_operation_mode, cuvis_operation_mode_t, operation_mode_t);
     ACQ_STUB_0b(average, cuvis_acq_cont_average, int_t, int);
 
@@ -2916,7 +2933,7 @@ namespace cuvis
     height = info.height;
     raw_frame_id = info.raw_frame_id;
     pixel_format = std::string(info.pixel_format);
-    binning = (info.binning != 0);
+    integration_time = info.integration_time;
   }
 
 
