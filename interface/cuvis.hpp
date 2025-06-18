@@ -1008,6 +1008,16 @@ namespace cuvis
     */
     std::string get_id() const;
 
+    /**
+    * @brief get number of components
+    */
+    int_t get_component_count() const;
+
+    /**
+    * @brief get a components information
+    */
+    CUVIS_COMPONENT_INFO get_component_info(int_t id) const;
+
     /** @brief Expert: Return the current handle of the wrapper class */
     CUVIS_CALIB get_handle() const;
     /** @brief Expert: Create a copy of the current handle of the wrapper class and return it.
@@ -2358,6 +2368,20 @@ namespace cuvis
 
     return view_array;
   }
+
+  inline int_t Calibration::get_component_count() const
+  {
+    int_t count;
+    chk(cuvis_acq_cont_get_component_count(*_calib, &count));
+    return count;
+  }
+  inline CUVIS_COMPONENT_INFO Calibration::get_component_info(int_t id) const
+  {
+    CUVIS_COMPONENT_INFO info;
+    chk(cuvis_acq_cont_get_component_info(*_calib, id, &info));
+    return info;
+  }
+
   inline AcquisitionContext::~AcquisitionContext() { reset_state_change_callback(); }
 
   inline AcquisitionContext::AcquisitionContext(Calibration const& calib) : _state_poll_thread_run(false)
