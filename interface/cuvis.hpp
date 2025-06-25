@@ -2993,7 +2993,7 @@ namespace cuvis
     return proc_args;
   }
 
-  inline ViewArgs::ViewArgs() : userplugin(), complete(false), pre_pan_sharpen_cube(false) {}
+  inline ViewArgs::ViewArgs() : userplugin(), complete(false), pre_pan_sharpen_cube(false), pan_failback(true) {}
 
   inline ViewArgs::operator cuvis_viewer_settings_t() const
   {
