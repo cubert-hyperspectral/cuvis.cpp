@@ -1490,8 +1490,8 @@ namespace cuvis
     void set_exporter(Exporter const* exporter);
     void set_viewer(Viewer const* viewer);
 
-    void ingest_measurement(Measurement const* measurement);
-    void ingest_session_file(SessionFile const* session, std::string frame_selection);
+    void ingest_measurement(Measurement const& measurement);
+    void ingest_session_file(SessionFile const& session, std::string frame_selection);
     double query_session_progress();
 
     bool get_can_drop_results();
@@ -2024,12 +2024,9 @@ namespace cuvis
     }
   }
 
-  inline void Worker::ingest_session_file(SessionFile const* session, std::string frame_selection)
+  inline void Worker::ingest_session_file(SessionFile const& session, std::string frame_selection)
   {
-    if (session != nullptr)
-    {
-      chk(cuvis_worker_ingest_session_file(*_worker, *session->_session, frame_selection.c_str()));
-    }
+    chk(cuvis_worker_ingest_session_file(*_worker, *session._session, frame_selection.c_str()));
   }
 
   inline double Worker::query_session_progress()
@@ -2168,7 +2165,7 @@ namespace cuvis
     return {std::move(mesu), view, except};
   }
 
-  inline void Worker::ingest_measurement(Measurement const* measurement) { chk(cuvis_worker_ingest_mesu(*_worker, *measurement->_mesu)); }
+  inline void Worker::ingest_measurement(Measurement const& measurement) { chk(cuvis_worker_ingest_mesu(*_worker, *measurement._mesu)); }
 
   inline void Worker::start_processing() { chk(cuvis_worker_start(*_worker)); }
 
