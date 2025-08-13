@@ -2026,10 +2026,7 @@ namespace cuvis
 
   inline void Worker::ingest_session_file(SessionFile const& session, std::string frame_selection)
   {
-    if (session != nullptr)
-    {
-      chk(cuvis_worker_ingest_session_file(*_worker, *session._session, frame_selection.c_str()));
-    }
+    chk(cuvis_worker_ingest_session_file(*_worker, *session._session, frame_selection.c_str()));
   }
 
   inline double Worker::query_session_progress()
