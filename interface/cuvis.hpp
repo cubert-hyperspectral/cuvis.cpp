@@ -1526,9 +1526,9 @@ namespace cuvis
     std::shared_ptr<CUVIS_WORKER> _worker;
 
 
-    std::atomic_bool _worker_poll_thread_run;
-
-    std::thread _worker_poll_thread;
+    std::atomic_bool _worker_poll_thread_run = false;
+    mutable std::mutex _worker_poll_thread_lock;
+    std::shared_ptr<std::thread> _worker_poll_thread;
   };
 
   /** \cond INTERNAL */
@@ -2216,10 +2216,10 @@ namespace cuvis
     reset_worker_callback();
 
     static const std::chrono::milliseconds poll_time = std::chrono::milliseconds(1);
-
+    std::lock_guard<std::mutex> lock(_worker_poll_thread_lock);
     _worker_poll_thread_run = true;
 
-    _worker_poll_thread = std::thread([this, callback, concurrency, measurement_timeout_ms]
+    _worker_poll_thread = std::make_shared<std::thread>([this, callback, concurrency, measurement_timeout_ms]
                                       {
       std::deque<std::future<void>> async_tasks;
       while (_worker_poll_thread_run.load())
@@ -2261,10 +2261,12 @@ namespace cuvis
 
   inline void Worker::reset_worker_callback()
   {
+    std::lock_guard<std::mutex> lock(_worker_poll_thread_lock);
     _worker_poll_thread_run = false;
-    if (_worker_poll_thread.joinable())
+    if (_worker_poll_thread && _worker_poll_thread->joinable())
     {
-      _worker_poll_thread.join();
+      _worker_poll_thread->join();
+      _worker_poll_thread.reset();
     }
   }
 
