@@ -105,8 +105,8 @@ namespace cuvis
   /** @copydoc cuvis_capabilities_t */
   using capabilities_t = cuvis_capabilities_t;
 
-  /** @copydoc cuvis_cube_merge_mode_t */
-  using cube_merge_mode_t = cuvis_cube_merge_mode_t;
+  /** @copydoc cuvis_session_merge_mode_t */
+  using session_merge_mode_t = cuvis_session_merge_mode_t;
 
   /** @} */
 
@@ -344,7 +344,7 @@ namespace cuvis
      *
      * @copydoc cuvis_save_args_t.merge_mode
      * */
-    cube_merge_mode_t merge_mode;
+    session_merge_mode_t merge_mode;
 
     /** @brief allow to overwrite existing files (default: false)
      *
@@ -2939,7 +2939,7 @@ namespace cuvis
   }
 
   inline SaveArgs::SaveArgs()
-      : merge_mode(cube_merge_mode_t::cube_merge_mode_Default),
+      : merge_mode(session_merge_mode_t::session_merge_mode_Default),
         allow_overwrite(false),
         allow_drop(false),
         allow_session_file(true),
