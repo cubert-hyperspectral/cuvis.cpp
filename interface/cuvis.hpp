@@ -194,7 +194,7 @@ namespace cuvis
      *> (2,0,0); (2,0,1); (2,1,0); (0,1,1) \n
      *
      * */
-    data_t const *_data;
+    data_t const* _data;
 
     /** Access to a given memory location within @ref _data
      *
@@ -203,7 +203,7 @@ namespace cuvis
      * @param y z pixel position (0 - @ref _channels - 1), Use "0" for a 2d image
      * @returns the pixel value of the image / cube at position (x,y,z)
      * */
-    data_t const &get(std::size_t x, std::size_t y, std::size_t z = std::size_t(0)) const;
+    data_t const& get(std::size_t x, std::size_t y, std::size_t z = std::size_t(0)) const;
   };
 
   /** @brief Image data from a measurement
@@ -221,7 +221,7 @@ namespace cuvis
 
   public:
     /** wavelength vector. nullptr, an array of size @ref _channels contianing the wavelengths in nano meter. */
-    uint32_t const *_wavelength;
+    uint32_t const* _wavelength;
 
   private:
     std::shared_ptr<CUVIS_MESU> _ref;
@@ -535,7 +535,7 @@ namespace cuvis
     SessionInfo();
 
     /** Constructor to create session info from session*/
-    SessionInfo(session_info_t const &sess);
+    SessionInfo(session_info_t const& sess);
 
     /** @brief convert to C - SDK settings structure
      *
@@ -568,7 +568,7 @@ namespace cuvis
     CalibrationInfo();
 
     /** Constructor to create session info from session*/
-    CalibrationInfo(calibration_info_t const &calib);
+    CalibrationInfo(calibration_info_t const& calib);
 
     /** @brief convert to C - SDK settings structure
      *
@@ -624,7 +624,7 @@ namespace cuvis
     /**
      * @copydoc cuvis_calibration_info_t.cube_wavelengths
      */
-    uint32_t const *cube_wavelengths;
+    uint32_t const* cube_wavelengths;
   };
 
   /**
@@ -633,7 +633,7 @@ namespace cuvis
   struct MeasurementMetaData
   {
     /** Constructor to create default parameters */
-    MeasurementMetaData(mesu_metadata_t const &meta);
+    MeasurementMetaData(mesu_metadata_t const& meta);
 
     /**
      * @copydoc cuvis_mesu_metadata_t.name
@@ -709,7 +709,7 @@ namespace cuvis
    */
   struct SensorInfoData
   {
-    SensorInfoData(sensor_info_t const &info);
+    SensorInfoData(sensor_info_t const& info);
     /** number of averages used*/
     uint32_t averages;
     /** the sensors's temperature while readout (0 if not applicable) */
@@ -733,9 +733,9 @@ namespace cuvis
   class cuvis_sdk_exception : public std::exception
   {
   public:
-    cuvis_sdk_exception(std::string const &msg, std::wstring const &wmsg);
+    cuvis_sdk_exception(std::string const& msg, std::wstring const& wmsg);
 
-    char const *what(void) const noexcept;
+    char const* what(void) const noexcept;
 
     std::wstring what_wstr(void) const noexcept;
 
@@ -754,11 +754,11 @@ namespace cuvis
     /**
      * @copydoc cuvis_set_exception_locale
      */
-    static void set_exception_locale(std::string const &locale = "");
+    static void set_exception_locale(std::string const& locale = "");
     /**
      * @copydoc cuvis_register_log_callback
      */
-    static void register_log_callback(std::function<void(char const *, loglevel_t)> callback, int_t min_lvl);
+    static void register_log_callback(std::function<void(char const*, loglevel_t)> callback, int_t min_lvl);
     /**
      * @copydoc cuvis_reset_log_callback
      */
@@ -766,7 +766,7 @@ namespace cuvis
     /**
      * @copydoc cuvis_register_log_callback_localized
      */
-    static void register_log_callback_localized(std::function<void(wchar_t const *, loglevel_t)> callback, int_t min_lvl, std::string const &loc_id);
+    static void register_log_callback_localized(std::function<void(wchar_t const*, loglevel_t)> callback, int_t min_lvl, std::string const& loc_id);
     /**
      * @copydoc cuvis_reset_log_callback_localized
      */
@@ -778,7 +778,7 @@ namespace cuvis
     /**
      * @copydoc cuvis_init
      */
-    static void init(std::string const &settings_path, int global_loglevel = 4, std ::string logfile_name = "");
+    static void init(std::string const& settings_path, int global_loglevel = 4, std ::string logfile_name = "");
     /**
      * @copydoc cuvis_shutdown
      */
@@ -817,20 +817,20 @@ namespace cuvis
 
   public:
     /* shallow copy(move assignment) */
-    Measurement &operator=(Measurement const &measurement) = default;
+    Measurement& operator=(Measurement const& measurement) = default;
 
     /* move constructor */
-    Measurement(Measurement &&measurement) = default;
+    Measurement(Measurement&& measurement) = default;
 
     /**
      * @copydoc cuvis_measurement_deep_copy
      */
-    Measurement(Measurement const &source);
+    Measurement(Measurement const& source);
 
     /**
      * @copydoc cuvis_measurement_load
      */
-    Measurement(std::filesystem::path const &path);
+    Measurement(std::filesystem::path const& path);
 
     /** @brief Get the capabilites of the measurement which were present in the calibration during capture.
      * This doesn't indicate which capabilities are currently available for the measurement.
@@ -843,32 +843,32 @@ namespace cuvis
      * the measurement when it was recorded: when and how. Meta-Data
      * do not contain the actual recorded data.
      */
-    MeasurementMetaData const *get_meta() const;
+    MeasurementMetaData const* get_meta() const;
 
     /** @brief Get image info data from measurement
      *
      * Return image data from a measurement.
      */
-    sensor_info_data_t const *get_sensor_info() const;
+    sensor_info_data_t const* get_sensor_info() const;
 
     /** @brief Get GPS data from measurement
      */
-    gps_data_t const *get_gps() const { return _gps_data.get(); }
+    gps_data_t const* get_gps() const { return _gps_data.get(); }
 
     /**  @brief Get image data from measurement
      *
      * Return image data from measurement.
      */
-    image_data_t const *get_imdata() const { return _image_data.get(); }
+    image_data_t const* get_imdata() const { return _image_data.get(); }
 
     /** @brief Get string data from measurement
      */
-    string_data_t const *get_strdata() const { return _string_data.get(); }
+    string_data_t const* get_strdata() const { return _string_data.get(); }
 
     /** @brief Get thumbnail / preview image of measurement
      *
      */
-    image_t<std::uint8_t> const *get_thumbnail() const;
+    image_t<std::uint8_t> const* get_thumbnail() const;
     /** @brief get calibration id of this measurement
      */
     std::string get_calib_id() const;
@@ -879,18 +879,18 @@ namespace cuvis
      *
      * @param args The Save Arguments to use for saving the measurement. See also @ref SaveArgs
      */
-    void save(SaveArgs const &args);
+    void save(SaveArgs const& args);
 
     /** @brief Set name of measurement
      *
      *   @param name String to use as name of the measuremen
      */
-    void set_name(std::string const &name);
+    void set_name(std::string const& name);
 
     /** @brief set comment of measurement
      * @param comment String to use as comment for the measurement
      */
-    void set_comment(std::string const &comment);
+    void set_comment(std::string const& comment);
 
     /** @brief clears the cube from the measurement
      *
@@ -964,7 +964,7 @@ namespace cuvis
      *
      * @param[in] path The path to the factory directory
      */
-    Calibration(std::filesystem::path const &path);
+    Calibration(std::filesystem::path const& path);
 
     /** @brief Create a calibration from session file
      *
@@ -982,7 +982,7 @@ namespace cuvis
      *
      * @param[in] session The session file
      */
-    Calibration(SessionFile const &session);
+    Calibration(SessionFile const& session);
 
     /**
      * @brief get calibration capabilities
@@ -1037,7 +1037,7 @@ namespace cuvis
     friend class Worker;
 
   public:
-    SessionFile(std::filesystem::path const &path);
+    SessionFile(std::filesystem::path const& path);
 
     std::optional<Measurement> get_mesu(int_t frameNo, cuvis_session_item_type_t type = cuvis_session_item_type_t::session_item_type_frames) const;
 
@@ -1087,11 +1087,11 @@ namespace cuvis
 
   public:
     // Builders
-    ProcessingContext(Calibration const &calib);
-    ProcessingContext(Measurement const &mesu);
-    ProcessingContext(SessionFile const &session);
+    ProcessingContext(Calibration const& calib);
+    ProcessingContext(Measurement const& mesu);
+    ProcessingContext(SessionFile const& session);
     // Apply
-    Measurement &apply(Measurement &mesu) const;
+    Measurement& apply(Measurement& mesu) const;
     bool calc_distance(double distMM);
 
   public:
@@ -1103,7 +1103,7 @@ namespace cuvis
      * @param mesu measurement The measurement to be used as explicit reference
      * @param type Type of reference to set
      */
-    void set_reference(Measurement const &mesu, reference_type_t type);
+    void set_reference(Measurement const& mesu, reference_type_t type);
 
     /**
      * @brief Clear a reference measurement
@@ -1116,7 +1116,7 @@ namespace cuvis
      *
      * @param procArgs arguments to set
      */
-    void set_processingArgs(ProcessingArgs const &procArgs);
+    void set_processingArgs(ProcessingArgs const& procArgs);
 
     // getters
     /**
@@ -1131,7 +1131,7 @@ namespace cuvis
     /**
      * @brief get the arguments of the processing context
      */
-    ProcessingArgs const &get_processingArgs() const;
+    ProcessingArgs const& get_processingArgs() const;
 
     // checkers
     /**
@@ -1144,7 +1144,7 @@ namespace cuvis
     * Use this function, to check whether a specific mode is explicitly possible for
     * a measurement.
     */
-    bool is_capable(Measurement const &mesu, ProcessingArgs const &procArgs) const;
+    bool is_capable(Measurement const& mesu, ProcessingArgs const& procArgs) const;
 
     /**
      * @brief Check if an explicit reference was set
@@ -1224,8 +1224,8 @@ namespace cuvis
     using state_callback_t = std::function<void(hardware_state_t, std::map<int_t, component_state_info_t>)>;
 
   public:
-    AcquisitionContext(Calibration const &calib);
-    AcquisitionContext(SessionFile const &sess, bool simulate = false);
+    AcquisitionContext(Calibration const& calib);
+    AcquisitionContext(SessionFile const& sess, bool simulate = false);
     ~AcquisitionContext();
 
   public:
@@ -1256,16 +1256,17 @@ namespace cuvis
     chk(sdkname##_get(*_acqCont, &res));                        \
     return static_cast<type_wrapped>(res);                      \
   }
-#define ACQ_STUB_0b(funname, sdkname, type_ifcae, type_wrapped)                                                                                  \
-  Async set_##funname(type_wrapped value) const                                                                                                  \
-  {                                                                                                                                              \
-    CUVIS_ASYNC_CALL_RESULT async_handle;                                                                                                        \
-    chk(sdkname##_set_async(*_acqCont, &async_handle, static_cast<type_ifcae>(value)));                                                          \
-    Async async;                                                                                                                                 \
-    async._async = std::shared_ptr<CUVIS_ASYNC_CALL_RESULT>(new CUVIS_ASYNC_CALL_RESULT{async_handle}, [](CUVIS_ASYNC_CALL_RESULT *handle) { \
+#define ACQ_STUB_0b(funname, sdkname, type_ifcae, type_wrapped)                                                                              \
+  Async set_##funname(type_wrapped value) const                                                                                              \
+  {                                                                                                                                          \
+    CUVIS_ASYNC_CALL_RESULT async_handle;                                                                                                    \
+    chk(sdkname##_set_async(*_acqCont, &async_handle, static_cast<type_ifcae>(value)));                                                      \
+    Async async;                                                                                                                             \
+    async._async = std::shared_ptr<CUVIS_ASYNC_CALL_RESULT>(new CUVIS_ASYNC_CALL_RESULT{async_handle}, [](CUVIS_ASYNC_CALL_RESULT* handle) { \
       cuvis_async_call_free(handle);                                                                                                         \
-      delete handle; }); \
-    return async;                                                                                                                                \
+      delete handle;                                                                                                                         \
+    });                                                                                                                                      \
+    return async;                                                                                                                            \
   }
 
     ACQ_STUB_0a(fps, cuvis_acq_cont_fps, double, double);
@@ -1317,16 +1318,17 @@ namespace cuvis
 
 #undef ACQ_STUB_1a
 
-#define ACQ_STUB_1b(funname, sdkname, type_ifcae, type_wrapped)                                                                                  \
-  Async set_##funname(size_t id, type_wrapped value) const                                                                                       \
-  {                                                                                                                                              \
-    CUVIS_ASYNC_CALL_RESULT async_handle;                                                                                                        \
-    chk(sdkname##_set_async(*_acqCont, static_cast<int32_t>(id), &async_handle, static_cast<type_ifcae>(value)));                                \
-    Async async;                                                                                                                                 \
-    async._async = std::shared_ptr<CUVIS_ASYNC_CALL_RESULT>(new CUVIS_ASYNC_CALL_RESULT{async_handle}, [](CUVIS_ASYNC_CALL_RESULT *handle) { \
+#define ACQ_STUB_1b(funname, sdkname, type_ifcae, type_wrapped)                                                                              \
+  Async set_##funname(size_t id, type_wrapped value) const                                                                                   \
+  {                                                                                                                                          \
+    CUVIS_ASYNC_CALL_RESULT async_handle;                                                                                                    \
+    chk(sdkname##_set_async(*_acqCont, static_cast<int32_t>(id), &async_handle, static_cast<type_ifcae>(value)));                            \
+    Async async;                                                                                                                             \
+    async._async = std::shared_ptr<CUVIS_ASYNC_CALL_RESULT>(new CUVIS_ASYNC_CALL_RESULT{async_handle}, [](CUVIS_ASYNC_CALL_RESULT* handle) { \
       cuvis_async_call_free(handle);                                                                                                         \
-      delete handle; }); \
-    return async;                                                                                                                                \
+      delete handle;                                                                                                                         \
+    });                                                                                                                                      \
+    return async;                                                                                                                            \
   }
 
     ACQ_STUB_1b(component_gain, cuvis_comp_gain, double, double);
@@ -1366,8 +1368,8 @@ namespace cuvis
     using view_data_t = std::map<std::string, view_variant_t>;
 
   public:
-    Viewer(ViewArgs const &args);
-    view_data_t apply(Measurement const &mesu);
+    Viewer(ViewArgs const& args);
+    view_data_t apply(Measurement const& mesu);
 
     /** @brief Expert: Return the current handle of the wrapper class */
     CUVIS_VIEWER get_handle() const;
@@ -1396,7 +1398,7 @@ namespace cuvis
   public:
     using general_export_settings_t = cuvis_export_general_settings_t;
 
-    Measurement const &apply(Measurement const &mesu) const;
+    Measurement const& apply(Measurement const& mesu) const;
 
     size_t get_queue_used() const;
     void flush();
@@ -1415,7 +1417,7 @@ namespace cuvis
     using format_settings_t = cuvis_save_args_t;
 
   public:
-    CubeExporter(SaveArgs const &args);
+    CubeExporter(SaveArgs const& args);
   };
 
   class TiffExporter : public Exporter
@@ -1424,13 +1426,13 @@ namespace cuvis
     using format_settings_t = cuvis_export_tiff_settings_t;
 
   public:
-    TiffExporter(TiffArgs const &args);
+    TiffExporter(TiffArgs const& args);
   };
 
   class EnviExporter : public Exporter
   {
   public:
-    EnviExporter(EnviArgs const &args);
+    EnviExporter(EnviArgs const& args);
   };
 
   class ViewExporter : public Exporter
@@ -1439,7 +1441,7 @@ namespace cuvis
     using format_settings_t = cuvis_export_view_settings_t;
 
   public:
-    ViewExporter(ViewArgs const &args);
+    ViewExporter(ViewArgs const& args);
   };
 
   class Worker
@@ -1466,15 +1468,15 @@ namespace cuvis
     using worker_callback_t = std::function<void(worker_return_t)>;
 
   public:
-    Worker(WorkerArgs const &args);
+    Worker(WorkerArgs const& args);
 
-    void set_acq_cont(AcquisitionContext const *acqCont);
-    void set_proc_cont(ProcessingContext const *procCont);
-    void set_exporter(Exporter const *exporter);
-    void set_viewer(Viewer const *viewer);
+    void set_acq_cont(AcquisitionContext const* acqCont);
+    void set_proc_cont(ProcessingContext const* procCont);
+    void set_exporter(Exporter const* exporter);
+    void set_viewer(Viewer const* viewer);
 
-    void ingest_measurement(Measurement const &measurement);
-    void ingest_session_file(SessionFile const &session, std::string frame_selection);
+    void ingest_measurement(Measurement const& measurement);
+    void ingest_session_file(SessionFile const& session, std::string frame_selection);
     double query_session_progress();
 
     bool get_can_drop_results();
@@ -1525,7 +1527,7 @@ namespace cuvis
     }
   }
 
-  inline Measurement::Measurement(Measurement const &source)
+  inline Measurement::Measurement(Measurement const& source)
       : _gps_data(std::make_shared<gps_data_t>()),
         _string_data(std::make_shared<string_data_t>()),
         _image_data(std::make_shared<image_data_t>()),
@@ -1534,14 +1536,14 @@ namespace cuvis
     CUVIS_MESU copy_handle;
     chk(cuvis_measurement_deep_copy(*source._mesu, &copy_handle));
 
-    _mesu = std::shared_ptr<CUVIS_MESU>(new CUVIS_MESU{copy_handle}, [](CUVIS_MESU *handle)
-                                        {
+    _mesu = std::shared_ptr<CUVIS_MESU>(new CUVIS_MESU{copy_handle}, [](CUVIS_MESU* handle) {
       cuvis_measurement_free(handle);
-      delete handle; });
+      delete handle;
+    });
     refresh();
   }
 
-  inline Measurement::Measurement(std::filesystem::path const &path)
+  inline Measurement::Measurement(std::filesystem::path const& path)
       : _gps_data(std::make_shared<gps_data_t>()),
         _string_data(std::make_shared<string_data_t>()),
         _image_data(std::make_shared<image_data_t>()),
@@ -1550,10 +1552,10 @@ namespace cuvis
     CUVIS_MESU mesu;
     chk(cuvis_measurement_load(path.string().c_str(), &mesu));
 
-    _mesu = std::shared_ptr<CUVIS_MESU>(new CUVIS_MESU{mesu}, [](CUVIS_MESU *handle)
-                                        {
+    _mesu = std::shared_ptr<CUVIS_MESU>(new CUVIS_MESU{mesu}, [](CUVIS_MESU* handle) {
       cuvis_measurement_free(handle);
-      delete handle; });
+      delete handle;
+    });
 
     refresh();
   }
@@ -1563,27 +1565,27 @@ namespace cuvis
         _string_data(std::make_shared<string_data_t>()),
         _image_data(std::make_shared<image_data_t>()),
         _sensor_info(std::make_shared<sensor_info_data_t>()),
-        _mesu(std::shared_ptr<CUVIS_MESU>(new CUVIS_MESU{handle}, [](CUVIS_MESU *handle)
-                                          {
+        _mesu(std::shared_ptr<CUVIS_MESU>(new CUVIS_MESU{handle}, [](CUVIS_MESU* handle) {
           cuvis_measurement_free(handle);
-          delete handle; }))
+          delete handle;
+        }))
   {
     refresh();
   }
 
-  inline void Measurement::save(SaveArgs const &args)
+  inline void Measurement::save(SaveArgs const& args)
   {
     chk(cuvis_measurement_save(*_mesu, args.export_dir.string().c_str(), args));
     refresh();
   }
 
-  inline void Measurement::set_name(std::string const &name)
+  inline void Measurement::set_name(std::string const& name)
   {
     chk(cuvis_measurement_set_name(*_mesu, name.c_str()));
     refresh();
   }
 
-  inline void Measurement::set_comment(std::string const &comment)
+  inline void Measurement::set_comment(std::string const& comment)
   {
     chk(cuvis_measurement_set_comment(*_mesu, comment.c_str()));
     refresh();
@@ -1607,14 +1609,13 @@ namespace cuvis
     chk(cuvis_measurement_get_metadata(*_mesu, &meta));
     _meta = std::make_shared<cuvis::MeasurementMetaData>(meta);
 
-    auto get_flag = [&](CUVIS_FLAGS flag, std::string const &key) -> void
-    {
+    auto get_flag = [&](CUVIS_FLAGS flag, std::string const& key) -> void {
       if (meta.measurement_flags & flag)
       {
         CUVIS_SIZE buffer_length;
         chk(cuvis_measurement_get_data_string_length(*_mesu, key.c_str(), &buffer_length));
 
-        CUVIS_CHAR *value = new CUVIS_CHAR[buffer_length];
+        CUVIS_CHAR* value = new CUVIS_CHAR[buffer_length];
         chk(cuvis_measurement_get_data_string(*_mesu, key.c_str(), buffer_length, value));
         //_string_data->emplace(std::string(key), std::string(value));
 
@@ -1654,105 +1655,97 @@ namespace cuvis
 
       switch (type)
       {
-      case cuvis_data_type_t::data_type_gps:
-      {
-        cuvis_gps_t gps;
-        chk(cuvis_measurement_get_data_gps(*_mesu, key, &gps));
-        _gps_data->emplace(std::string(key), gps);
-      }
-      break;
-      case cuvis_data_type_t::data_type_sensor_info:
-      {
-        sensor_info_t info;
-        chk(cuvis_measurement_get_data_sensor_info(*_mesu, key, &info));
-        _sensor_info->emplace(std::string(key), SensorInfoData(info));
-      }
-      break;
-      case cuvis_data_type_t::data_type_image:
-      {
-        cuvis_imbuffer_t im;
-        chk(cuvis_measurement_get_data_image(*_mesu, key, &im));
-        switch (im.format)
-        {
-        case cuvis_imbuffer_format_t::imbuffer_format_uint8:
-        {
-          image_t<std::uint8_t> image({});
-          image._width = im.width;
-          image._height = im.height;
-          image._channels = im.channels;
-          image._data = reinterpret_cast<std::uint8_t const *>(im.raw);
-          image._wavelength = im.wavelength;
-          image._ref = _mesu;
-
-          _image_data->emplace(std::string(key), image);
-          if (std::string(key) == CUVIS_MESU_PREVIEW_KEY)
+        case cuvis_data_type_t::data_type_gps: {
+          cuvis_gps_t gps;
+          chk(cuvis_measurement_get_data_gps(*_mesu, key, &gps));
+          _gps_data->emplace(std::string(key), gps);
+        }
+        break;
+        case cuvis_data_type_t::data_type_sensor_info: {
+          sensor_info_t info;
+          chk(cuvis_measurement_get_data_sensor_info(*_mesu, key, &info));
+          _sensor_info->emplace(std::string(key), SensorInfoData(info));
+        }
+        break;
+        case cuvis_data_type_t::data_type_image: {
+          cuvis_imbuffer_t im;
+          chk(cuvis_measurement_get_data_image(*_mesu, key, &im));
+          switch (im.format)
           {
-            _preview_image = std::make_shared<image_t<std::uint8_t>>(image);
+            case cuvis_imbuffer_format_t::imbuffer_format_uint8: {
+              image_t<std::uint8_t> image({});
+              image._width = im.width;
+              image._height = im.height;
+              image._channels = im.channels;
+              image._data = reinterpret_cast<std::uint8_t const*>(im.raw);
+              image._wavelength = im.wavelength;
+              image._ref = _mesu;
+
+              _image_data->emplace(std::string(key), image);
+              if (std::string(key) == CUVIS_MESU_PREVIEW_KEY)
+              {
+                _preview_image = std::make_shared<image_t<std::uint8_t>>(image);
+              }
+              else if (std::string(key) == CUVIS_MESU_PAN_KEY && !_preview_image)
+              {
+                _preview_image = std::make_shared<image_t<std::uint8_t>>(image);
+              }
+            }
+            break;
+            case cuvis_imbuffer_format_t::imbuffer_format_uint16: {
+              image_t<std::uint16_t> image({});
+              image._width = im.width;
+              image._height = im.height;
+              image._channels = im.channels;
+              image._data = reinterpret_cast<std::uint16_t const*>(im.raw);
+              image._wavelength = im.wavelength;
+              image._ref = _mesu;
+
+              _image_data->emplace(std::string(key), image);
+            }
+            break;
+            case cuvis_imbuffer_format_t::imbuffer_format_uint32: {
+              image_t<std::uint32_t> image({});
+              image._width = im.width;
+              image._height = im.height;
+              image._channels = im.channels;
+              image._data = reinterpret_cast<std::uint32_t const*>(im.raw);
+              image._wavelength = im.wavelength;
+              image._ref = _mesu;
+
+              _image_data->emplace(std::string(key), image);
+            }
+            break;
+            case cuvis_imbuffer_format_t::imbuffer_format_float: {
+              image_t<float> image({});
+              image._width = im.width;
+              image._height = im.height;
+              image._channels = im.channels;
+              image._data = reinterpret_cast<float const*>(im.raw);
+              image._wavelength = im.wavelength;
+              image._ref = _mesu;
+
+              _image_data->emplace(std::string(key), image);
+            }
+            break;
+            default: // unknown or unsupported
+              throw std::runtime_error("unsupported measurement data bit depth");
+              break;
           }
-          else if (std::string(key) == CUVIS_MESU_PAN_KEY && !_preview_image)
-          {
-            _preview_image = std::make_shared<image_t<std::uint8_t>>(image);
-          }
         }
         break;
-        case cuvis_imbuffer_format_t::imbuffer_format_uint16:
-        {
-          image_t<std::uint16_t> image({});
-          image._width = im.width;
-          image._height = im.height;
-          image._channels = im.channels;
-          image._data = reinterpret_cast<std::uint16_t const *>(im.raw);
-          image._wavelength = im.wavelength;
-          image._ref = _mesu;
+        case cuvis_data_type_t::data_type_string: {
+          CUVIS_SIZE buffer_length;
+          chk(cuvis_measurement_get_data_string_length(*_mesu, key, &buffer_length));
 
-          _image_data->emplace(std::string(key), image);
-        }
-        break;
-        case cuvis_imbuffer_format_t::imbuffer_format_uint32:
-        {
-          image_t<std::uint32_t> image({});
-          image._width = im.width;
-          image._height = im.height;
-          image._channels = im.channels;
-          image._data = reinterpret_cast<std::uint32_t const *>(im.raw);
-          image._wavelength = im.wavelength;
-          image._ref = _mesu;
-
-          _image_data->emplace(std::string(key), image);
-        }
-        break;
-        case cuvis_imbuffer_format_t::imbuffer_format_float:
-        {
-          image_t<float> image({});
-          image._width = im.width;
-          image._height = im.height;
-          image._channels = im.channels;
-          image._data = reinterpret_cast<float const *>(im.raw);
-          image._wavelength = im.wavelength;
-          image._ref = _mesu;
-
-          _image_data->emplace(std::string(key), image);
+          CUVIS_CHAR* value = new CUVIS_CHAR[buffer_length];
+          chk(cuvis_measurement_get_data_string(*_mesu, key, buffer_length, value));
+          _string_data->emplace(std::string(key), std::string(value));
+          delete[] value;
         }
         break;
         default: // unknown or unsupported
-          throw std::runtime_error("unsupported measurement data bit depth");
           break;
-        }
-      }
-      break;
-      case cuvis_data_type_t::data_type_string:
-      {
-        CUVIS_SIZE buffer_length;
-        chk(cuvis_measurement_get_data_string_length(*_mesu, key, &buffer_length));
-
-        CUVIS_CHAR *value = new CUVIS_CHAR[buffer_length];
-        chk(cuvis_measurement_get_data_string(*_mesu, key, buffer_length, value));
-        _string_data->emplace(std::string(key), std::string(value));
-        delete[] value;
-      }
-      break;
-      default: // unknown or unsupported
-        break;
       }
     }
   }
@@ -1827,41 +1820,40 @@ namespace cuvis
     return CalibrationInfo(info);
   }
 
-  inline image_t<std::uint8_t> const *Measurement::get_thumbnail() const { return _preview_image.get(); }
+  inline image_t<std::uint8_t> const* Measurement::get_thumbnail() const { return _preview_image.get(); }
 
-  inline MeasurementMetaData const *Measurement::get_meta() const { return _meta.get(); }
+  inline MeasurementMetaData const* Measurement::get_meta() const { return _meta.get(); }
 
-  inline cuvis::Measurement::sensor_info_data_t const *Measurement::get_sensor_info() const { return _sensor_info.get(); }
+  inline cuvis::Measurement::sensor_info_data_t const* Measurement::get_sensor_info() const { return _sensor_info.get(); }
 
-  inline Calibration::Calibration(std::filesystem::path const &path)
+  inline Calibration::Calibration(std::filesystem::path const& path)
   {
     CUVIS_CALIB calib;
     chk(cuvis_calib_create_from_path(path.string().c_str(), &calib));
 
-    _calib = std::shared_ptr<CUVIS_CALIB>(new CUVIS_CALIB{calib}, [](CUVIS_CALIB *handle)
-                                          {
+    _calib = std::shared_ptr<CUVIS_CALIB>(new CUVIS_CALIB{calib}, [](CUVIS_CALIB* handle) {
       cuvis_calib_free(handle);
-      delete handle; });
+      delete handle;
+    });
   }
 
-  inline Calibration::Calibration(SessionFile const &session)
+  inline Calibration::Calibration(SessionFile const& session)
   {
     CUVIS_CALIB calib;
     chk(cuvis_calib_create_from_session_file(*session._session, &calib));
 
-    _calib = std::shared_ptr<CUVIS_CALIB>(new CUVIS_CALIB{calib}, [](CUVIS_CALIB *handle)
-                                          {
+    _calib = std::shared_ptr<CUVIS_CALIB>(new CUVIS_CALIB{calib}, [](CUVIS_CALIB* handle) {
       cuvis_calib_free(handle);
-      delete handle; });
+      delete handle;
+    });
   }
 
   inline Calibration::Calibration(CUVIS_CALIB handle)
-      : _calib(std::shared_ptr<CUVIS_CALIB>(new CUVIS_CALIB{handle}, [](CUVIS_CALIB *handle)
-                                            {
+      : _calib(std::shared_ptr<CUVIS_CALIB>(new CUVIS_CALIB{handle}, [](CUVIS_CALIB* handle) {
           cuvis_calib_free(handle);
-          delete handle; }))
-  {
-  }
+          delete handle;
+        }))
+  {}
 
   inline CUVIS_CALIB Calibration::get_handle() const { return *_calib; }
 
@@ -1872,52 +1864,51 @@ namespace cuvis
     return new_handle;
   }
 
-  inline ProcessingContext::ProcessingContext(Calibration const &calib)
+  inline ProcessingContext::ProcessingContext(Calibration const& calib)
   {
     CUVIS_PROC_CONT procCont;
     chk(cuvis_proc_cont_create_from_calib(*calib._calib, &procCont));
-    _procCont = std::shared_ptr<CUVIS_PROC_CONT>(new CUVIS_PROC_CONT{procCont}, [](CUVIS_PROC_CONT *handle)
-                                                 {
+    _procCont = std::shared_ptr<CUVIS_PROC_CONT>(new CUVIS_PROC_CONT{procCont}, [](CUVIS_PROC_CONT* handle) {
       cuvis_proc_cont_free(handle);
-      delete handle; });
+      delete handle;
+    });
   }
 
-  inline ProcessingContext::ProcessingContext(Measurement const &mesu)
+  inline ProcessingContext::ProcessingContext(Measurement const& mesu)
   {
     CUVIS_PROC_CONT procCont;
     chk(cuvis_proc_cont_create_from_mesu(*mesu._mesu, &procCont));
-    _procCont = std::shared_ptr<CUVIS_PROC_CONT>(new CUVIS_PROC_CONT{procCont}, [](CUVIS_PROC_CONT *handle)
-                                                 {
+    _procCont = std::shared_ptr<CUVIS_PROC_CONT>(new CUVIS_PROC_CONT{procCont}, [](CUVIS_PROC_CONT* handle) {
       cuvis_proc_cont_free(handle);
-      delete handle; });
+      delete handle;
+    });
   }
 
-  inline ProcessingContext::ProcessingContext(SessionFile const &session)
+  inline ProcessingContext::ProcessingContext(SessionFile const& session)
   {
     CUVIS_PROC_CONT procCont;
     chk(cuvis_proc_cont_create_from_session_file(*session._session, &procCont));
-    _procCont = std::shared_ptr<CUVIS_PROC_CONT>(new CUVIS_PROC_CONT{procCont}, [](CUVIS_PROC_CONT *handle)
-                                                 {
+    _procCont = std::shared_ptr<CUVIS_PROC_CONT>(new CUVIS_PROC_CONT{procCont}, [](CUVIS_PROC_CONT* handle) {
       cuvis_proc_cont_free(handle);
-      delete handle; });
+      delete handle;
+    });
   }
 
   inline ProcessingContext::ProcessingContext(CUVIS_CALIB handle)
-      : _procCont(std::shared_ptr<CUVIS_PROC_CONT>(new CUVIS_PROC_CONT{handle}, [](CUVIS_PROC_CONT *handle)
-                                                   {
+      : _procCont(std::shared_ptr<CUVIS_PROC_CONT>(new CUVIS_PROC_CONT{handle}, [](CUVIS_PROC_CONT* handle) {
           cuvis_proc_cont_free(handle);
-          delete handle; }))
-  {
-  }
+          delete handle;
+        }))
+  {}
 
-  inline Measurement &ProcessingContext::apply(Measurement &mesu) const
+  inline Measurement& ProcessingContext::apply(Measurement& mesu) const
   {
     chk(cuvis_proc_cont_apply(*_procCont, *mesu._mesu));
     mesu.refresh();
     return mesu;
   }
 
-  inline void ProcessingContext::set_reference(Measurement const &mesu, reference_type_t type)
+  inline void ProcessingContext::set_reference(Measurement const& mesu, reference_type_t type)
   {
     chk(cuvis_proc_cont_set_reference(*_procCont, *mesu._mesu, type));
     return;
@@ -1950,7 +1941,7 @@ namespace cuvis
     return true;
   }
 
-  inline bool ProcessingContext::is_capable(Measurement const &mesu, ProcessingArgs const &procArgs) const
+  inline bool ProcessingContext::is_capable(Measurement const& mesu, ProcessingArgs const& procArgs) const
   {
     int_t isCap;
 
@@ -1970,13 +1961,13 @@ namespace cuvis
     return {1 == hasRef};
   }
 
-  inline void ProcessingContext::set_processingArgs(ProcessingArgs const &procArgs)
+  inline void ProcessingContext::set_processingArgs(ProcessingArgs const& procArgs)
   {
     _procArgs = procArgs;
     chk(cuvis_proc_cont_set_args(*_procCont, _procArgs));
   }
 
-  inline ProcessingArgs const &ProcessingContext::get_processingArgs() const { return _procArgs; }
+  inline ProcessingArgs const& ProcessingContext::get_processingArgs() const { return _procArgs; }
 
   inline CUVIS_PROC_CONT ProcessingContext::get_handle() const { return *_procCont; }
 
@@ -1987,18 +1978,18 @@ namespace cuvis
     return new_handle;
   }
 
-  inline Worker::Worker(WorkerArgs const &args) : _worker_poll_thread_run(false)
+  inline Worker::Worker(WorkerArgs const& args) : _worker_poll_thread_run(false)
 
   {
     CUVIS_WORKER worker;
     chk(cuvis_worker_create(&worker, args.operator cuvis_worker_settings_t()));
-    _worker = std::shared_ptr<CUVIS_WORKER>(new CUVIS_WORKER{worker}, [](CUVIS_WORKER *handle)
-                                            {
+    _worker = std::shared_ptr<CUVIS_WORKER>(new CUVIS_WORKER{worker}, [](CUVIS_WORKER* handle) {
       cuvis_worker_free(handle);
-      delete handle; });
+      delete handle;
+    });
   }
 
-  inline void Worker::set_acq_cont(AcquisitionContext const *acqCont)
+  inline void Worker::set_acq_cont(AcquisitionContext const* acqCont)
   {
     if (nullptr != acqCont)
     {
@@ -2010,7 +2001,7 @@ namespace cuvis
     }
   }
 
-  inline void Worker::ingest_session_file(SessionFile const &session, std::string frame_selection)
+  inline void Worker::ingest_session_file(SessionFile const& session, std::string frame_selection)
   {
     chk(cuvis_worker_ingest_session_file(*_worker, *session._session, frame_selection.c_str()));
   }
@@ -2043,7 +2034,7 @@ namespace cuvis
     return bool(canSkip);
   }
 
-  inline void Worker::set_proc_cont(ProcessingContext const *procCont)
+  inline void Worker::set_proc_cont(ProcessingContext const* procCont)
   {
     if (nullptr != procCont)
     {
@@ -2055,7 +2046,7 @@ namespace cuvis
     }
   }
 
-  inline void Worker::set_exporter(Exporter const *exporter)
+  inline void Worker::set_exporter(Exporter const* exporter)
   {
     if (nullptr != exporter)
     {
@@ -2066,7 +2057,7 @@ namespace cuvis
       chk(cuvis_worker_set_exporter(*_worker, CUVIS_HANDLE_NULL));
     }
   }
-  inline void Worker::set_viewer(Viewer const *viewer)
+  inline void Worker::set_viewer(Viewer const* viewer)
   {
     if (nullptr != viewer)
     {
@@ -2141,7 +2132,7 @@ namespace cuvis
       chk(code);
       // transforms into exception
     }
-    catch (cuvis::cuvis_sdk_exception const &)
+    catch (cuvis::cuvis_sdk_exception const&)
     {
       except = std::current_exception();
     }
@@ -2149,7 +2140,7 @@ namespace cuvis
     return {std::move(mesu), view, except};
   }
 
-  inline void Worker::ingest_measurement(Measurement const &measurement) { chk(cuvis_worker_ingest_mesu(*_worker, *measurement._mesu)); }
+  inline void Worker::ingest_measurement(Measurement const& measurement) { chk(cuvis_worker_ingest_mesu(*_worker, *measurement._mesu)); }
 
   inline void Worker::start_processing() { chk(cuvis_worker_start(*_worker)); }
 
@@ -2203,8 +2194,7 @@ namespace cuvis
     std::lock_guard<std::mutex> lock(_worker_poll_thread_lock);
     _worker_poll_thread_run = true;
 
-    _worker_poll_thread = std::make_shared<std::thread>([this, callback, concurrency, measurement_timeout_ms]
-                                                        {
+    _worker_poll_thread = std::make_shared<std::thread>([this, callback, concurrency, measurement_timeout_ms] {
       std::deque<std::future<void>> async_tasks;
       while (_worker_poll_thread_run.load())
       {
@@ -2239,7 +2229,8 @@ namespace cuvis
             async_tasks.pop_front();
           }
         }
-      } });
+      }
+    });
   }
 
   inline void Worker::reset_worker_callback()
@@ -2253,23 +2244,22 @@ namespace cuvis
     }
   }
 
-  inline Viewer::Viewer(ViewArgs const &args)
+  inline Viewer::Viewer(ViewArgs const& args)
   {
     CUVIS_VIEWER viewer;
     chk(cuvis_viewer_create(&viewer, args));
-    _viewer = std::shared_ptr<CUVIS_VIEWER>(new CUVIS_VIEWER{viewer}, [](CUVIS_VIEWER *handle)
-                                            {
+    _viewer = std::shared_ptr<CUVIS_VIEWER>(new CUVIS_VIEWER{viewer}, [](CUVIS_VIEWER* handle) {
       cuvis_viewer_free(handle);
-      delete handle; });
+      delete handle;
+    });
   }
 
   inline Viewer::Viewer(CUVIS_VIEWER handle)
-      : _viewer(std::shared_ptr<CUVIS_VIEWER>(new CUVIS_VIEWER{handle}, [](CUVIS_VIEWER *handle)
-                                              {
+      : _viewer(std::shared_ptr<CUVIS_VIEWER>(new CUVIS_VIEWER{handle}, [](CUVIS_VIEWER* handle) {
           cuvis_viewer_free(handle);
-          delete handle; }))
-  {
-  }
+          delete handle;
+        }))
+  {}
 
   inline CUVIS_VIEWER Viewer::get_handle() const { return *_viewer; }
 
@@ -2280,7 +2270,7 @@ namespace cuvis
     return new_handle;
   }
 
-  inline Viewer::view_data_t Viewer::apply(Measurement const &mesu)
+  inline Viewer::view_data_t Viewer::apply(Measurement const& mesu)
   {
     CUVIS_VIEW current_view;
     chk(cuvis_viewer_apply(*_viewer, *mesu._mesu, &current_view));
@@ -2291,10 +2281,10 @@ namespace cuvis
   {
     Viewer::view_data_t view_array;
 
-    auto current_view_handle = std::shared_ptr<CUVIS_VIEW>(new CUVIS_VIEW{current_view}, [](CUVIS_VIEW *handle)
-                                                           {
+    auto current_view_handle = std::shared_ptr<CUVIS_VIEW>(new CUVIS_VIEW{current_view}, [](CUVIS_VIEW* handle) {
       cuvis_view_free(handle);
-      delete handle; });
+      delete handle;
+    });
 
     int_t numel;
     chk(cuvis_view_get_data_count(current_view, &numel));
@@ -2304,45 +2294,43 @@ namespace cuvis
       cuvis_view_data_t view_data;
       chk(cuvis_view_get_data(current_view, k, &view_data));
 
-      cuvis_imbuffer_t const &im = view_data.data;
+      cuvis_imbuffer_t const& im = view_data.data;
 
       switch (im.format)
       {
-      case cuvis_imbuffer_format_t::imbuffer_format_uint8:
-      {
-        view_t<std::uint8_t> view({});
-        view._width = im.width;
-        view._height = im.height;
-        view._channels = im.channels;
-        view._data = reinterpret_cast<std::uint8_t const *>(im.raw);
-        view._show = (view_data.show != 0);
-        view._category = view_data.category;
-        view._ref = current_view_handle;
+        case cuvis_imbuffer_format_t::imbuffer_format_uint8: {
+          view_t<std::uint8_t> view({});
+          view._width = im.width;
+          view._height = im.height;
+          view._channels = im.channels;
+          view._data = reinterpret_cast<std::uint8_t const*>(im.raw);
+          view._show = (view_data.show != 0);
+          view._category = view_data.category;
+          view._ref = current_view_handle;
 
-        view_array.emplace(std::string(view_data.id), std::move(view));
+          view_array.emplace(std::string(view_data.id), std::move(view));
+
+          break;
+        }
+        case cuvis_imbuffer_format_t::imbuffer_format_float: {
+          view_t<float> view({});
+          view._width = im.width;
+          view._height = im.height;
+          view._channels = im.channels;
+          view._data = reinterpret_cast<float const*>(im.raw);
+          view._show = (view_data.show != 0);
+          view._category = view_data.category;
+          view._ref = current_view_handle;
+
+          view_array.emplace(std::string(view_data.id), view);
+
+          break;
+        }
 
         break;
-      }
-      case cuvis_imbuffer_format_t::imbuffer_format_float:
-      {
-        view_t<float> view({});
-        view._width = im.width;
-        view._height = im.height;
-        view._channels = im.channels;
-        view._data = reinterpret_cast<float const *>(im.raw);
-        view._show = (view_data.show != 0);
-        view._category = view_data.category;
-        view._ref = current_view_handle;
-
-        view_array.emplace(std::string(view_data.id), view);
-
-        break;
-      }
-
-      break;
-      default: // unknown or unsupported
-        throw std::runtime_error("unsupported view bit depth");
-        break;
+        default: // unknown or unsupported
+          throw std::runtime_error("unsupported view bit depth");
+          break;
       }
     }
 
@@ -2364,34 +2352,33 @@ namespace cuvis
 
   inline AcquisitionContext::~AcquisitionContext() { reset_state_change_callback(); }
 
-  inline AcquisitionContext::AcquisitionContext(Calibration const &calib) : _state_poll_thread_run(false)
+  inline AcquisitionContext::AcquisitionContext(Calibration const& calib) : _state_poll_thread_run(false)
   {
     CUVIS_ACQ_CONT acqCont;
     chk(cuvis_acq_cont_create_from_calib(*calib._calib, &acqCont));
-    _acqCont = std::shared_ptr<CUVIS_ACQ_CONT>(new CUVIS_ACQ_CONT{acqCont}, [](CUVIS_ACQ_CONT *handle)
-                                               {
+    _acqCont = std::shared_ptr<CUVIS_ACQ_CONT>(new CUVIS_ACQ_CONT{acqCont}, [](CUVIS_ACQ_CONT* handle) {
       cuvis_acq_cont_free(handle);
-      delete handle; });
+      delete handle;
+    });
   }
 
-  inline AcquisitionContext::AcquisitionContext(SessionFile const &sess, bool simulate) : _state_poll_thread_run(false)
+  inline AcquisitionContext::AcquisitionContext(SessionFile const& sess, bool simulate) : _state_poll_thread_run(false)
   {
     CUVIS_ACQ_CONT acqCont;
     chk(cuvis_acq_cont_create_from_session_file(*sess._session, simulate, &acqCont));
     // chk(cuvis_proc_cont_create_from_session_file(*sess._session, &acqCont));
-    _acqCont = std::shared_ptr<CUVIS_ACQ_CONT>(new CUVIS_ACQ_CONT{acqCont}, [](CUVIS_ACQ_CONT *handle)
-                                               {
+    _acqCont = std::shared_ptr<CUVIS_ACQ_CONT>(new CUVIS_ACQ_CONT{acqCont}, [](CUVIS_ACQ_CONT* handle) {
       cuvis_acq_cont_free(handle);
-      delete handle; });
+      delete handle;
+    });
   }
 
   inline AcquisitionContext::AcquisitionContext(CUVIS_VIEWER handle)
-      : _acqCont(std::shared_ptr<CUVIS_ACQ_CONT>(new CUVIS_ACQ_CONT{handle}, [](CUVIS_ACQ_CONT *handle)
-                                                 {
+      : _acqCont(std::shared_ptr<CUVIS_ACQ_CONT>(new CUVIS_ACQ_CONT{handle}, [](CUVIS_ACQ_CONT* handle) {
           cuvis_acq_cont_free(handle);
-          delete handle; }))
-  {
-  }
+          delete handle;
+        }))
+  {}
 
   inline CUVIS_ACQ_CONT AcquisitionContext::get_handle() const { return *_acqCont; }
 
@@ -2408,8 +2395,7 @@ namespace cuvis
 
     _state_poll_thread_run = true;
 
-    _state_poll_thread = std::thread([this, callback, output_initial_state]
-                                     {
+    _state_poll_thread = std::thread([this, callback, output_initial_state] {
       hardware_state_t last_state = hardware_state_offline;
       std::map<int_t, component_state_info_t> last_component_states;
       for (int k = 0; k < get_component_count(); k++)
@@ -2449,7 +2435,8 @@ namespace cuvis
           static const std::chrono::milliseconds poll_time = std::chrono::milliseconds(500);
           std::this_thread::sleep_for(poll_time);
         }
-      } });
+      }
+    });
   }
 
   inline void AcquisitionContext::reset_state_change_callback()
@@ -2462,7 +2449,7 @@ namespace cuvis
     }
   }
 
-  inline Measurement const &Exporter::apply(Measurement const &mesu) const
+  inline Measurement const& Exporter::apply(Measurement const& mesu) const
   {
     chk(cuvis_exporter_apply(*_exporter, *mesu._mesu));
     return mesu;
@@ -2479,34 +2466,34 @@ namespace cuvis
 
   inline void Exporter::setHandle(CUVIS_EXPORTER exporter)
   {
-    _exporter = std::shared_ptr<CUVIS_EXPORTER>(new CUVIS_EXPORTER{exporter}, [](CUVIS_EXPORTER *handle)
-                                                {
+    _exporter = std::shared_ptr<CUVIS_EXPORTER>(new CUVIS_EXPORTER{exporter}, [](CUVIS_EXPORTER* handle) {
       cuvis_exporter_free(handle);
-      delete handle; });
+      delete handle;
+    });
   }
 
-  inline CubeExporter::CubeExporter(SaveArgs const &args)
+  inline CubeExporter::CubeExporter(SaveArgs const& args)
   {
     CUVIS_EXPORTER exporter;
     chk(cuvis_exporter_create_cube(&exporter, args, args));
     setHandle(exporter);
   }
 
-  inline TiffExporter::TiffExporter(TiffArgs const &args)
+  inline TiffExporter::TiffExporter(TiffArgs const& args)
   {
     CUVIS_EXPORTER exporter;
     chk(cuvis_exporter_create_tiff(&exporter, args, args));
     setHandle(exporter);
   }
 
-  inline EnviExporter::EnviExporter(EnviArgs const &args)
+  inline EnviExporter::EnviExporter(EnviArgs const& args)
   {
     CUVIS_EXPORTER exporter;
     chk(cuvis_exporter_create_envi(&exporter, args));
     setHandle(exporter);
   }
 
-  inline ViewExporter::ViewExporter(ViewArgs const &args)
+  inline ViewExporter::ViewExporter(ViewArgs const& args)
   {
     CUVIS_EXPORTER exporter;
     chk(cuvis_exporter_create_view(&exporter, args, args));
@@ -2518,16 +2505,11 @@ namespace cuvis
     auto result = cuvis_async_call_get(_async.get(), int_t(waittime.count()));
     switch (result)
     {
-    case cuvis_status_t::status_ok:
-      return async_result_t::done;
-    case cuvis_status_t::status_deferred:
-      return async_result_t::deferred;
-    case cuvis_status_t::status_overwritten:
-      return async_result_t::overwritten;
-    case cuvis_status_t::status_timeout:
-      return async_result_t::timeout;
-    default:
-      throw cuvis_sdk_exception(cuvis_get_last_error_msg(), cuvis_get_last_error_msg_localized());
+      case cuvis_status_t::status_ok: return async_result_t::done;
+      case cuvis_status_t::status_deferred: return async_result_t::deferred;
+      case cuvis_status_t::status_overwritten: return async_result_t::overwritten;
+      case cuvis_status_t::status_timeout: return async_result_t::timeout;
+      default: throw cuvis_sdk_exception(cuvis_get_last_error_msg(), cuvis_get_last_error_msg_localized());
     }
   }
 
@@ -2537,16 +2519,11 @@ namespace cuvis
     auto result = cuvis_async_capture_get(_async.get(), int_t(waittime.count()), &mesu);
     switch (result)
     {
-    case cuvis_status_t::status_ok:
-      return {async_result_t::done, Measurement(mesu)};
-    case cuvis_status_t::status_deferred:
-      return {async_result_t::deferred, {}};
-    case cuvis_status_t::status_overwritten:
-      return {async_result_t::overwritten, {}};
-    case cuvis_status_t::status_timeout:
-      return {async_result_t::timeout, {}};
-    default:
-      throw cuvis_sdk_exception(cuvis_get_last_error_msg(), cuvis_get_last_error_msg_localized());
+      case cuvis_status_t::status_ok: return {async_result_t::done, Measurement(mesu)};
+      case cuvis_status_t::status_deferred: return {async_result_t::deferred, {}};
+      case cuvis_status_t::status_overwritten: return {async_result_t::overwritten, {}};
+      case cuvis_status_t::status_timeout: return {async_result_t::timeout, {}};
+      default: throw cuvis_sdk_exception(cuvis_get_last_error_msg(), cuvis_get_last_error_msg_localized());
     }
   }
 
@@ -2557,10 +2534,10 @@ namespace cuvis
     CUVIS_ASYNC_CAPTURE_RESULT asyncRes;
     chk(cuvis_acq_cont_capture_async(*_acqCont, &asyncRes));
     AsyncMesu am;
-    am._async = std::shared_ptr<CUVIS_ASYNC_CAPTURE_RESULT>(new CUVIS_ASYNC_CAPTURE_RESULT{asyncRes}, [](CUVIS_ASYNC_CAPTURE_RESULT *handle)
-                                                            {
+    am._async = std::shared_ptr<CUVIS_ASYNC_CAPTURE_RESULT>(new CUVIS_ASYNC_CAPTURE_RESULT{asyncRes}, [](CUVIS_ASYNC_CAPTURE_RESULT* handle) {
       cuvis_async_capture_free(handle);
-      delete handle; });
+      delete handle;
+    });
     return am;
   }
 
@@ -2583,10 +2560,10 @@ namespace cuvis
     CUVIS_ASYNC_CALL_RESULT async_handle;
     chk(cuvis_comp_pixel_format_set_async(*_acqCont, &async_handle, id, format.c_str()));
     Async async;
-    async._async = std::shared_ptr<CUVIS_ASYNC_CALL_RESULT>(new CUVIS_ASYNC_CALL_RESULT{async_handle}, [](CUVIS_ASYNC_CALL_RESULT *handle)
-                                                            {
+    async._async = std::shared_ptr<CUVIS_ASYNC_CALL_RESULT>(new CUVIS_ASYNC_CALL_RESULT{async_handle}, [](CUVIS_ASYNC_CALL_RESULT* handle) {
       cuvis_async_call_free(handle);
-      delete handle; });
+      delete handle;
+    });
     return async;
   }
 
@@ -2672,7 +2649,7 @@ namespace cuvis
     return;
   }
 
-  inline void General::set_exception_locale(std::string const &locale)
+  inline void General::set_exception_locale(std::string const& locale)
   {
     chk(cuvis_set_last_error_locale(locale.c_str()));
     return;
@@ -2686,17 +2663,17 @@ namespace cuvis
       event_handler_register() = default;
 
     public:
-      static event_handler_register &get_handler_register()
+      static event_handler_register& get_handler_register()
       {
         static event_handler_register reg;
         return reg;
       }
 
     public:
-      event_handler_register(event_handler_register const &) = delete;
-      event_handler_register(event_handler_register &&) = delete;
-      event_handler_register &operator=(event_handler_register &&) = delete;
-      event_handler_register &operator=(event_handler_register const &) = delete;
+      event_handler_register(event_handler_register const&) = delete;
+      event_handler_register(event_handler_register&&) = delete;
+      event_handler_register& operator=(event_handler_register&&) = delete;
+      event_handler_register& operator=(event_handler_register const&) = delete;
 
     private:
       std::mutex mtx_;
@@ -2705,7 +2682,7 @@ namespace cuvis
       static void handler_function(int_t handler_id, int_t event_id)
       {
         /* handler function gets called from another thread than register/unregister */
-        event_handler_register &reg = get_handler_register();
+        event_handler_register& reg = get_handler_register();
         std::lock_guard lock(reg.mtx_);
         const auto itr = reg.handler_register_.find(handler_id);
         if (itr != reg.handler_register_.end())
@@ -2751,14 +2728,14 @@ namespace cuvis
   namespace log_impl
   {
     inline std::mutex log_callback_fun_mutex;
-    inline std::function<void(char const *, loglevel_t)> log_callback_fun;
-    inline void SDK_CCALL custom_log(char const *msg, loglevel_t lvl) { log_callback_fun(msg, lvl); }
+    inline std::function<void(char const*, loglevel_t)> log_callback_fun;
+    inline void SDK_CCALL custom_log(char const* msg, loglevel_t lvl) { log_callback_fun(msg, lvl); }
     inline std::mutex log_callback_localized_fun_mutex;
-    inline std::function<void(wchar_t const *, loglevel_t)> log_callback_localized_fun;
-    inline void SDK_CCALL custom_log_localized(wchar_t const *msg, loglevel_t lvl) { log_callback_localized_fun(msg, lvl); }
+    inline std::function<void(wchar_t const*, loglevel_t)> log_callback_localized_fun;
+    inline void SDK_CCALL custom_log_localized(wchar_t const* msg, loglevel_t lvl) { log_callback_localized_fun(msg, lvl); }
   } // namespace log_impl
 
-  inline void General::register_log_callback(std::function<void(char const *, loglevel_t)> callback, int_t min_lvl)
+  inline void General::register_log_callback(std::function<void(char const*, loglevel_t)> callback, int_t min_lvl)
   {
     const std::lock_guard<std::mutex> lock(log_impl::log_callback_fun_mutex);
     log_impl::log_callback_fun = callback;
@@ -2771,11 +2748,11 @@ namespace cuvis
   {
     const std::lock_guard<std::mutex> lock(log_impl::log_callback_fun_mutex);
     chk(cuvis_reset_log_callback());
-    log_impl::log_callback_fun = std::function<void(char const *, loglevel_t)>();
+    log_impl::log_callback_fun = std::function<void(char const*, loglevel_t)>();
     return;
   }
 
-  inline void General::register_log_callback_localized(std::function<void(wchar_t const *, loglevel_t)> callback, int_t min_lvl, std::string const &loc_id = "")
+  inline void General::register_log_callback_localized(std::function<void(wchar_t const*, loglevel_t)> callback, int_t min_lvl, std::string const& loc_id = "")
   {
     const std::lock_guard<std::mutex> lock(log_impl::log_callback_localized_fun_mutex);
     log_impl::log_callback_localized_fun = callback;
@@ -2787,7 +2764,7 @@ namespace cuvis
   {
     const std::lock_guard<std::mutex> lock(log_impl::log_callback_localized_fun_mutex);
     chk(cuvis_reset_log_callback_localized());
-    log_impl::log_callback_localized_fun = std::function<void(wchar_t const *, loglevel_t)>();
+    log_impl::log_callback_localized_fun = std::function<void(wchar_t const*, loglevel_t)>();
     return;
   }
 
@@ -2798,7 +2775,7 @@ namespace cuvis
     return std::string(version);
   }
 
-  inline void General::init(std::string const &settings_path, int global_loglevel, std::string logfile_name)
+  inline void General::init(std::string const& settings_path, int global_loglevel, std::string logfile_name)
   {
     chk(cuvis_init(settings_path.c_str(), global_loglevel, logfile_name.empty() ? NULL : logfile_name.c_str()));
     return;
@@ -2806,14 +2783,14 @@ namespace cuvis
 
   inline void General::shutdown() { chk(cuvis_shutdown()); }
 
-  inline SessionFile::SessionFile(std::filesystem::path const &path)
+  inline SessionFile::SessionFile(std::filesystem::path const& path)
   {
     CUVIS_SESSION_FILE session;
     chk(cuvis_session_file_load(path.string().c_str(), &session));
-    _session = std::shared_ptr<CUVIS_SESSION_FILE>(new CUVIS_SESSION_FILE{session}, [](CUVIS_SESSION_FILE *handle)
-                                                   {
+    _session = std::shared_ptr<CUVIS_SESSION_FILE>(new CUVIS_SESSION_FILE{session}, [](CUVIS_SESSION_FILE* handle) {
       cuvis_session_file_free(handle);
-      delete handle; });
+      delete handle;
+    });
   }
 
   inline std::optional<Measurement> SessionFile::get_mesu(int_t frameNo, cuvis_session_item_type_t type) const
@@ -2856,7 +2833,7 @@ namespace cuvis
     image._width = thumbnail.width;
     image._height = thumbnail.height;
     image._channels = thumbnail.channels;
-    image._data = reinterpret_cast<std::uint8_t const *>(thumbnail.raw);
+    image._data = reinterpret_cast<std::uint8_t const*>(thumbnail.raw);
 
     return image;
   }
@@ -2900,7 +2877,7 @@ namespace cuvis
   }
 
   template <typename data_t>
-  inline data_t const &common_image_t<data_t>::get(std::size_t x, std::size_t y, std::size_t z) const
+  inline data_t const& common_image_t<data_t>::get(std::size_t x, std::size_t y, std::size_t z) const
   {
     assert(x < _width);
     assert(y < _height);
@@ -2919,8 +2896,7 @@ namespace cuvis
         add_fullscale_pan(false),
         permissive(false),
         blend_opacity(0.0)
-  {
-  }
+  {}
 
   inline GeneralExportArgs::operator cuvis_export_general_settings_t() const
   {
@@ -2949,8 +2925,7 @@ namespace cuvis
         soft_limit(20),
         hard_limit(100),
         max_buftime(10000)
-  {
-  }
+  {}
 
   inline SaveArgs::operator cuvis_save_args_t() const
   {
@@ -3021,8 +2996,7 @@ namespace cuvis
         can_skip_measurements(false),
         can_skip_supplementary_steps(true),
         can_drop_results(true)
-  {
-  }
+  {}
 
   inline WorkerArgs::operator cuvis_worker_settings_t() const
   {
@@ -3040,7 +3014,7 @@ namespace cuvis
 
   inline SessionInfo::SessionInfo() : name("auto"), session_no(0), sequence_no(0) {}
 
-  inline SessionInfo::SessionInfo(session_info_t const &sess) : name(sess.name), session_no(sess.session_no), sequence_no(sess.sequence_no) {}
+  inline SessionInfo::SessionInfo(session_info_t const& sess) : name(sess.name), session_no(sess.session_no), sequence_no(sess.sequence_no) {}
 
   inline SessionInfo::operator cuvis::session_info_t() const
   {
@@ -3053,18 +3027,16 @@ namespace cuvis
 
   inline CalibrationInfo::CalibrationInfo()
       : model_name("null"), serial_no("null"), calibration_date(), annotation_name("null"), unique_id("null"), file_path("null")
-  {
-  }
+  {}
 
-  inline CalibrationInfo::CalibrationInfo(calibration_info_t const &calib)
+  inline CalibrationInfo::CalibrationInfo(calibration_info_t const& calib)
       : model_name(calib.model_name),
         serial_no(calib.serial_no),
         calibration_date(std::chrono::time_point<std::chrono::system_clock>(std::chrono::milliseconds(calib.calibration_date))),
         annotation_name(calib.annotation_name),
         unique_id(calib.unique_id),
         file_path(calib.file_path)
-  {
-  }
+  {}
 
   inline CalibrationInfo::operator cuvis::calibration_info_t() const
   {
@@ -3078,7 +3050,7 @@ namespace cuvis
     return calib;
   }
 
-  inline MeasurementMetaData::MeasurementMetaData(mesu_metadata_t const &meta)
+  inline MeasurementMetaData::MeasurementMetaData(mesu_metadata_t const& meta)
   {
     name = std::string(meta.name);
     path = std::string(meta.path);
@@ -3108,7 +3080,7 @@ namespace cuvis
     processing_mode = meta.processing_mode;
   }
 
-  inline SensorInfoData::SensorInfoData(sensor_info_t const &info)
+  inline SensorInfoData::SensorInfoData(sensor_info_t const& info)
   {
     averages = info.averages;
     temperature = info.temperature;
@@ -3121,9 +3093,9 @@ namespace cuvis
     integration_time = info.integration_time;
   }
 
-  inline cuvis_sdk_exception::cuvis_sdk_exception(std::string const &msg, std::wstring const &wmsg) : _msg(msg), _wmsg(wmsg) {}
+  inline cuvis_sdk_exception::cuvis_sdk_exception(std::string const& msg, std::wstring const& wmsg) : _msg(msg), _wmsg(wmsg) {}
 
-  inline char const *cuvis_sdk_exception::what(void) const noexcept { return _msg.c_str(); }
+  inline char const* cuvis_sdk_exception::what(void) const noexcept { return _msg.c_str(); }
 
   inline std::wstring cuvis_sdk_exception::what_wstr(void) const noexcept { return _wmsg; }
   /** \endcond   */
