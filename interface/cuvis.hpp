@@ -1,11 +1,11 @@
 #pragma once
 
 /**
-  * @file cuvis.hpp
-  * SDK calls for cuvis CPP SDK (wrapper).
-  *
-  * This header defines all public CPP SDK (wrapper) functions
-  * */
+ * @file cuvis.hpp
+ * SDK calls for cuvis CPP SDK (wrapper).
+ *
+ * This header defines all public CPP SDK (wrapper) functions
+ * */
 
 #include "cuvis.h"
 #pragma warning(disable : 26812)
@@ -30,7 +30,7 @@
 
 namespace cuvis
 {
-  //pre-declarations
+  // pre-declarations
   class Calibration;
   class Measurement;
   class SessionFile;
@@ -52,10 +52,10 @@ namespace cuvis
   struct SessionInfo;
 
   /** @addtogroup typedefs CPP Type definitions from cuvis C sdk.
-    * 
-    * Theese type definitions are taken from the CUVIS C SDK (see @ref cuvis.h). Please refer to the C types for documentation.
-    *  @{
-    */
+   *
+   * Theese type definitions are taken from the CUVIS C SDK (see @ref cuvis.h). Please refer to the C types for documentation.
+   *  @{
+   */
 
   /** @copydoc CUVIS_INT */
   using int_t = CUVIS_INT;
@@ -105,6 +105,8 @@ namespace cuvis
   /** @copydoc cuvis_capabilities_t */
   using capabilities_t = cuvis_capabilities_t;
 
+  /** @copydoc cuvis_session_merge_mode_t */
+  using session_merge_mode_t = cuvis_session_merge_mode_t;
 
   /** @} */
 
@@ -117,7 +119,7 @@ namespace cuvis
   /** @cond INTERNAL */
   void chk(CUVIS_STATUS status);
 
-  //image data traits
+  // image data traits
   template <typename T>
   struct is_supported_image_data_t
   {
@@ -162,13 +164,12 @@ namespace cuvis
 
   /** @endcond */
 
-
   /** @brief Metaclass for handling image data (2d or 3d)
-    *
-    * Holds an X/Y/Z- dimensional image cube, without wavelength informaiton. 
-    *
-    * @tparam data_t The pixel bit depth, either std::uint8_t, std::uint16_t, std::uint32_t or float
-    * */
+   *
+   * Holds an X/Y/Z- dimensional image cube, without wavelength informaiton.
+   *
+   * @tparam data_t The pixel bit depth, either std::uint8_t, std::uint16_t, std::uint32_t or float
+   * */
   template <typename data_t>
   struct common_image_t
   {
@@ -184,34 +185,34 @@ namespace cuvis
     std::size_t _channels;
 
     /** @brief The raw data pointer
-      *
-      * It is recommended to access the data with the @ref get function.\n
-      * The memory interleave is BIP. E.g. for a 3x3x2 (x,y,z) the coordinates are:
-      *
-      *> (0,0,0); (0,0,1); (0,1,0); (0,1,1) \n
-      *> (1,0,0); (1,0,1); (1,1,0); (0,1,1) \n
-      *> (2,0,0); (2,0,1); (2,1,0); (0,1,1) \n
-      *
-      * */
+     *
+     * It is recommended to access the data with the @ref get function.\n
+     * The memory interleave is BIP. E.g. for a 3x3x2 (x,y,z) the coordinates are:
+     *
+     *> (0,0,0); (0,0,1); (0,1,0); (0,1,1) \n
+     *> (1,0,0); (1,0,1); (1,1,0); (0,1,1) \n
+     *> (2,0,0); (2,0,1); (2,1,0); (0,1,1) \n
+     *
+     * */
     data_t const* _data;
 
-    /** Access to a given memory location within @ref _data 
-      *
-      * @param x x pixel position (0 - @ref _width - 1)
-      * @param y y pixel position (0 - @ref _height - 1)
-      * @param y z pixel position (0 - @ref _channels - 1), Use "0" for a 2d image
-      * @returns the pixel value of the image / cube at position (x,y,z)
-      * */
+    /** Access to a given memory location within @ref _data
+     *
+     * @param x x pixel position (0 - @ref _width - 1)
+     * @param y y pixel position (0 - @ref _height - 1)
+     * @param y z pixel position (0 - @ref _channels - 1), Use "0" for a 2d image
+     * @returns the pixel value of the image / cube at position (x,y,z)
+     * */
     data_t const& get(std::size_t x, std::size_t y, std::size_t z = std::size_t(0)) const;
   };
 
   /** @brief Image data from a measurement
-    *
-    * See @ref common_image_t for single pixel access.
-    * The @ref _wavelength is either a nullptr or, if set contains the cube's wavelengths in nano meter.
-    *
-    * @tparam data_t The pixel bit depth, either std::uint8_t, std::uint16_t, std::uint32_t or float 
-    * */
+   *
+   * See @ref common_image_t for single pixel access.
+   * The @ref _wavelength is either a nullptr or, if set contains the cube's wavelengths in nano meter.
+   *
+   * @tparam data_t The pixel bit depth, either std::uint8_t, std::uint16_t, std::uint32_t or float
+   * */
   template <typename data_t>
   struct image_t : common_image_t<data_t>
   {
@@ -227,13 +228,13 @@ namespace cuvis
   };
 
   /** @brief Image data created from @ref ViewExporter
-    *    
-    * The @ref ViewExpoter generates image views (int 8 bit resolution) and data views (in floating point precision). Each image is named by it's @ref _id. 
-    * Also the @ref _show flag is set with respect to the setting of the view's author. See @ref ViewExporter for more information.
-    * See @ref common_image_t for single pixel access.
-    *
-    * @tparam data_t The pixel bit depth, either std::uint8_t or float 
-    * */
+   *
+   * The @ref ViewExpoter generates image views (int 8 bit resolution) and data views (in floating point precision). Each image is named by it's @ref _id.
+   * Also the @ref _show flag is set with respect to the setting of the view's author. See @ref ViewExporter for more information.
+   * See @ref common_image_t for single pixel access.
+   *
+   * @tparam data_t The pixel bit depth, either std::uint8_t or float
+   * */
   template <typename data_t>
   struct view_t : common_image_t<data_t>
   {
@@ -256,9 +257,9 @@ namespace cuvis
   };
 
   /** @brief Export Settings common to all exporters
-    *
-    * The options of this structure can be set for any @ref Exporter. However, not all options are respected by the @ref Exporter. 
-    * */
+   *
+   * The options of this structure can be set for any @ref Exporter. However, not all options are respected by the @ref Exporter.
+   * */
   struct GeneralExportArgs
   {
     /** Constructor to create default parameters */
@@ -271,139 +272,138 @@ namespace cuvis
     std::filesystem::path export_dir;
 
     /** @brief The selection of spectral channels to be exproted. (default  : "all")
-      *
-      * @copydoc cuvis_export_general_settings_t.channel_selection 
-      * */
+     *
+     * @copydoc cuvis_export_general_settings_t.channel_selection
+     * */
     std::string channel_selection;
 
-    /** @brief Multiply the spectrum before exporting. 
-      *
-      * @copydoc cuvis_export_general_settings_t.spectra_multiplier
-      * */
+    /** @brief Multiply the spectrum before exporting.
+     *
+     * @copydoc cuvis_export_general_settings_t.spectra_multiplier
+     * */
     uint8_t spectra_multiplier;
 
     /** @brief amount of pan-sharpening (default: 0)
-      *
-      * @copydoc cuvis_export_general_settings_t.pan_scale
-      * */
+     *
+     * @copydoc cuvis_export_general_settings_t.pan_scale
+     * */
     double pan_scale;
 
     /** @brief The pansharpening interpolation type (default: @ref pan_sharpening_interpolation_type_Linear)
-      *
-      * @copydoc cuvis_export_general_settings_t.pan_interpolation_type
-      * */
+     *
+     * @copydoc cuvis_export_general_settings_t.pan_interpolation_type
+     * */
     pan_sharpening_interpolation_type_t pan_interpolation_type;
 
     /** @brief The pansharpening algorithm (default: @ref pan_sharpening_algorithm_CubertMacroPixel)
-      *
-      * @copydoc cuvis_export_general_settings_t.pan_interpolation_type
-      * */
+     *
+     * @copydoc cuvis_export_general_settings_t.pan_interpolation_type
+     * */
     pan_sharpening_algorithm_t pan_algorithm;
 
-
-    /** 
-      * @copydoc cuvis_viewer_settings_t.blend_opacity
-      */
+    /**
+     * @copydoc cuvis_viewer_settings_t.blend_opacity
+     */
     double blend_opacity;
 
     /** @brief Add the pan image to the output (default: @ref false)
-      *
-      * @copydoc cuvis_export_general_settings_t.add_pan
-      * */
+     *
+     * @copydoc cuvis_export_general_settings_t.add_pan
+     * */
     bool add_pan;
 
     /** @brief Add a full-resolution pan image to the export (default: @ref false)
-      *
-      * @copydoc cuvis_export_general_settings_t.add_fullscale_pan
-      * */
+     *
+     * @copydoc cuvis_export_general_settings_t.add_fullscale_pan
+     * */
     bool add_fullscale_pan;
 
     /** @brief Set @ref Expor   ter to permisive mode (default: @ref false)
-      *
-      * @copydoc cuvis_export_general_settings_t.permissive
-      * */
+     *
+     * @copydoc cuvis_export_general_settings_t.permissive
+     * */
     bool permissive;
   };
 
   /** @brief Options for saving cu3s/cu3 files
-    * 
-    * Use with either @ref CubeExporter (recommended) or @ref Measurement.save
-    */
+   *
+   * Use with either @ref CubeExporter (recommended) or @ref Measurement.save
+   */
   struct SaveArgs : public GeneralExportArgs
   {
     /** Constructor to create default parameters */
     SaveArgs();
 
-    /** @brief convert to C - SDK settings structure 
-      *
-      * @copydoc cuvis_save_args_t
-      */
+    /** @brief convert to C - SDK settings structure
+     *
+     * @copydoc cuvis_save_args_t
+     */
     operator cuvis_save_args_t() const;
 
     /** @brief allow to split to several files (default: false)
-      *
-      * @copydoc cuvis_save_args_t.allow_fragmentation
-      * */
-    bool allow_fragmentation;
+     *
+     * @copydoc cuvis_save_args_t.merge_mode
+     * */
+    session_merge_mode_t merge_mode;
 
     /** @brief allow to overwrite existing files (default: false)
-      *
-      * @copydoc cuvis_save_args_t.allow_overwrite
-      * */
+     *
+     * @copydoc cuvis_save_args_t.allow_overwrite
+     * */
     bool allow_overwrite;
 
     /** @brief allow to drop measurements if internal buffers a depleted (default: false)
-      *
-      * @copydoc cuvis_save_args_t.allow_drop
-      * */
+     *
+     * @copydoc cuvis_save_args_t.allow_drop
+     * */
     bool allow_drop;
 
     /** @brief allow to drop measurements if internal buffers a depleted (default: false)
-      *
-      * @copydoc cuvis_save_args_t.allow_drop
-      * */
+     *
+     * @copydoc cuvis_save_args_t.allow_drop
+     * */
     bool allow_session_file;
 
     /** @brief allow to write an additional .info file (default: true)
-      *
-      * @copydoc cuvis_save_args_t.allow_info_file
-      * */
+     *
+     * @copydoc cuvis_save_args_t.allow_info_file
+     * */
     bool allow_info_file;
 
     /** @brief The operation mode to be stored with a session file (default: @ref operation_mode_t.OperationMode_Software)
-      *
-      * @copydoc cuvis_save_args_t.operation_mode
-      * */
+     *
+     * @copydoc cuvis_save_args_t.operation_mode
+     * */
     operation_mode_t operation_mode;
 
     /** @brief The fps to be stored with a session file (default: 0)
-      *
-      * @copydoc cuvis_save_args_t.fps
-      * */
+     *
+     * @copydoc cuvis_save_args_t.fps
+     * */
     double fps;
 
     /** @brief Out-of-order frames are sorted within the cache, as long as the cache useage is below this limit
-      *
-      * @copydoc cuvis_save_args_t.soft_limit
-      * */
+     *
+     * @copydoc cuvis_save_args_t.soft_limit
+     * */
     size_t soft_limit;
 
     /** @brief Maximum number of elements in output cache.
-      *
-      * @copydoc cuvis_save_args_t.hard_limit
-      * */
+     *
+     * @copydoc cuvis_save_args_t.hard_limit
+     * */
     size_t hard_limit;
 
-    /** Any frame is forced to be written after this time, latest. 
-      *
-      * @copydoc cuvis_save_args_t.max_buftime
-      * */
+    /** Any frame is forced to be written after this time, latest.
+     *
+     * @copydoc cuvis_save_args_t.max_buftime
+     * */
     std::chrono::milliseconds max_buftime;
 
     /** The frame is saved including all results from processing, e.g. the cube.
-      *
-      * @copydoc cuvis_save_args_t.full_export
-      * */
+     *
+     * @copydoc cuvis_save_args_t.full_export
+     * */
     bool full_export;
   };
   /** @brief Additional settings for exporting tiff.*/
@@ -416,16 +416,15 @@ namespace cuvis
     operator cuvis_export_tiff_settings_t() const;
 
     /**
-      * @copydoc cuvis_export_tiff_settings_t.compression_mode
-      * */
+     * @copydoc cuvis_export_tiff_settings_t.compression_mode
+     * */
     tiff_compression_mode_t compression_mode;
 
-    /** 
-      * @copydoc cuvis_export_tiff_settings_t.format
-      * */
+    /**
+     * @copydoc cuvis_export_tiff_settings_t.format
+     * */
     tiff_format_t format;
   };
-
 
   struct EnviArgs : public GeneralExportArgs
   {
@@ -433,43 +432,43 @@ namespace cuvis
     EnviArgs() = default;
   };
   /** @brief viewer settings
-  * 
-  * */
+   *
+   * */
   struct ViewArgs : public GeneralExportArgs
   {
     /** Constructor to create default parameters */
     ViewArgs();
 
-    /** @brief convert to C - SDK settings structure 
-      *
-      * @copydoc cuvis_viewer_settings_t
-      */
+    /** @brief convert to C - SDK settings structure
+     *
+     * @copydoc cuvis_viewer_settings_t
+     */
     operator cuvis_viewer_settings_t() const;
 
-    /** @brief convert to C - SDK settings structure 
-      *
-      * @copydoc cuvis_export_view_settings_t
-      */
+    /** @brief convert to C - SDK settings structure
+     *
+     * @copydoc cuvis_export_view_settings_t
+     */
     operator cuvis_export_view_settings_t() const;
 
-    /** 
-      * @copydoc cuvis_viewer_settings_t.userplugin
-      */
+    /**
+     * @copydoc cuvis_viewer_settings_t.userplugin
+     */
     std::string userplugin;
 
-    /** 
-      * @copydoc cuvis_viewer_settings_t.pre_pan_sharpen_cube
-      */
+    /**
+     * @copydoc cuvis_viewer_settings_t.pre_pan_sharpen_cube
+     */
     bool pre_pan_sharpen_cube;
 
-    /** 
-      * @copydoc cuvis_viewer_settings_t.complete
-      */
+    /**
+     * @copydoc cuvis_viewer_settings_t.complete
+     */
     bool complete;
 
-    /** 
-      * @copydoc cuvis_viewer_settings_t.pan_failback
-      */
+    /**
+     * @copydoc cuvis_viewer_settings_t.pan_failback
+     */
     bool pan_failback;
   };
   /** @brief processing arguments */
@@ -477,20 +476,20 @@ namespace cuvis
   {
     /** Constructor to create default parameters */
     ProcessingArgs();
-    /** @brief convert to C - SDK settings structure 
-      *
-      * @copydoc cuvis_proc_args_t
-      */
+    /** @brief convert to C - SDK settings structure
+     *
+     * @copydoc cuvis_proc_args_t
+     */
     operator cuvis_proc_args_t() const;
 
-    /** 
-      * @copydoc cuvis_proc_args_t.processing_mode
-      */
+    /**
+     * @copydoc cuvis_proc_args_t.processing_mode
+     */
     processing_mode_t processing_mode;
 
-    /** 
-      * @copydoc cuvis_proc_args_t.allow_recalib
-      */
+    /**
+     * @copydoc cuvis_proc_args_t.allow_recalib
+     */
     bool allow_recalib;
   };
 
@@ -499,10 +498,10 @@ namespace cuvis
   {
     /** Constructor to create default parameters */
     WorkerArgs();
-    /** @brief convert to C - SDK settings structure 
-      *
-      * @copydoc cuvis_worker_settings_t
-      */
+    /** @brief convert to C - SDK settings structure
+     *
+     * @copydoc cuvis_worker_settings_t
+     */
     operator cuvis_worker_settings_t() const;
 
     /** @copydoc cuvis_worker_settings_t.input_queue_size   */
@@ -528,8 +527,8 @@ namespace cuvis
   };
 
   /*
-  * internal info
-  */
+   * internal info
+   */
   struct SessionInfo
   {
     /** Constructor to create default parameters */
@@ -538,31 +537,31 @@ namespace cuvis
     /** Constructor to create session info from session*/
     SessionInfo(session_info_t const& sess);
 
-    /** @brief convert to C - SDK settings structure 
-      *
-      * @copydoc cuvis_session_info_t
-      */
+    /** @brief convert to C - SDK settings structure
+     *
+     * @copydoc cuvis_session_info_t
+     */
     operator session_info_t() const;
 
     /**
-    * @copydoc cuvis_session_info_t.name
-    */
+     * @copydoc cuvis_session_info_t.name
+     */
     std::string name;
 
     /**
-    * @copydoc cuvis_session_info_t.session_no
-    */
+     * @copydoc cuvis_session_info_t.session_no
+     */
     unsigned session_no;
 
     /**
-    * @copydoc cuvis_session_info_t.sequence_no
-    */
+     * @copydoc cuvis_session_info_t.sequence_no
+     */
     unsigned sequence_no;
   };
 
   /*
-  * calibration info
-  */
+   * calibration info
+   */
   struct CalibrationInfo
   {
     /** Constructor to create default parameters */
@@ -571,135 +570,134 @@ namespace cuvis
     /** Constructor to create session info from session*/
     CalibrationInfo(calibration_info_t const& calib);
 
-    /** @brief convert to C - SDK settings structure 
-      *
-      * @copydoc cuvis_session_info_t
-      */
+    /** @brief convert to C - SDK settings structure
+     *
+     * @copydoc cuvis_session_info_t
+     */
     operator calibration_info_t() const;
 
     /**
-    * @copydoc cuvis_calibration_info_t.name
-    */
+     * @copydoc cuvis_calibration_info_t.name
+     */
     std::string model_name;
 
     /**
-    * @copydoc cuvis_calibration_info_t.serial_no
-    */
+     * @copydoc cuvis_calibration_info_t.serial_no
+     */
     std::string serial_no;
 
     /**
-    * @copydoc cuvis_calibration_info_t.calibration_date
-    */
+     * @copydoc cuvis_calibration_info_t.calibration_date
+     */
     timestamp_t calibration_date;
 
     /**
-    * @copydoc cuvis_calibration_info_t.annotation_name
-    */
+     * @copydoc cuvis_calibration_info_t.annotation_name
+     */
     std::string annotation_name;
 
     /**
-    * @copydoc cuvis_calibration_info_t.unique_id
-    */
+     * @copydoc cuvis_calibration_info_t.unique_id
+     */
     std::string unique_id;
 
     /**
-    * @copydoc cuvis_calibration_info_t.file_path
-    */
+     * @copydoc cuvis_calibration_info_t.file_path
+     */
     std::string file_path;
 
     /**
-    * @copydoc cuvis_calibration_info_t.cube_width
-    */
+     * @copydoc cuvis_calibration_info_t.cube_width
+     */
     uint32_t cube_width;
 
     /**
-    * @copydoc cuvis_calibration_info_t.cube_height
-    */
+     * @copydoc cuvis_calibration_info_t.cube_height
+     */
     uint32_t cube_height;
 
     /**
-    * @copydoc cuvis_calibration_info_t.cube_channels
-    */
+     * @copydoc cuvis_calibration_info_t.cube_channels
+     */
     uint32_t cube_channels;
 
     /**
-    * @copydoc cuvis_calibration_info_t.cube_wavelengths
-    */
+     * @copydoc cuvis_calibration_info_t.cube_wavelengths
+     */
     uint32_t const* cube_wavelengths;
   };
 
   /**
-  * measurement meta structure
-  */
+   * measurement meta structure
+   */
   struct MeasurementMetaData
   {
     /** Constructor to create default parameters */
     MeasurementMetaData(mesu_metadata_t const& meta);
 
     /**
-    * @copydoc cuvis_mesu_metadata_t.name
-    */
+     * @copydoc cuvis_mesu_metadata_t.name
+     */
     std::string name;
 
     /**
-    * @copydoc cuvis_mesu_metadata_t.path
-    */
+     * @copydoc cuvis_mesu_metadata_t.path
+     */
     std::string path;
 
     /**
-    * @copydoc cuvis_mesu_metadata_t.comment
-    */
+     * @copydoc cuvis_mesu_metadata_t.comment
+     */
     std::string comment;
 
     /**
-    * @copydoc cuvis_mesu_metadata_t.capture_time
-    */
+     * @copydoc cuvis_mesu_metadata_t.capture_time
+     */
     timestamp_t capture_time;
 
     /**
-    * @copydoc cuvis_mesu_metadata_t.factory_calibration
-    */
+     * @copydoc cuvis_mesu_metadata_t.factory_calibration
+     */
     timestamp_t factory_calibration;
 
     /**
-    * @copydoc cuvis_mesu_metadata_t.product_name
-    */
+     * @copydoc cuvis_mesu_metadata_t.product_name
+     */
     std::string product_name;
 
     /**
-    * @copydoc cuvis_mesu_metadata_t.serial_number
-    */
+     * @copydoc cuvis_mesu_metadata_t.serial_number
+     */
     std::string serial_number;
 
     /**
-    * @copydoc cuvis_mesu_metadata_t.assembly
-    */
+     * @copydoc cuvis_mesu_metadata_t.assembly
+     */
     std::string assembly;
 
     /**
-    * @copydoc cuvis_mesu_metadata_t.integration_time
-    */
+     * @copydoc cuvis_mesu_metadata_t.integration_time
+     */
     double integration_time;
 
     /**
-    * @copydoc cuvis_mesu_metadata_t.averages
-    */
+     * @copydoc cuvis_mesu_metadata_t.averages
+     */
     unsigned averages;
 
-
     /**
-    * The distance, the measurement was recorded in, in millimeters, if available.
-    */
+     * The distance, the measurement was recorded in, in millimeters, if available.
+     */
     std::optional<double> distance;
 
     /**
-    * The session information of the measurement.
-    */
+     * The session information of the measurement.
+     */
     SessionInfo session_info;
 
     /**
-    * The incremental frame ID given by cuvis to this measurement
-    */
+     * The incremental frame ID given by cuvis to this measurement
+     */
     size_t frame_id;
 
     processing_mode_t processing_mode;
@@ -707,8 +705,8 @@ namespace cuvis
   };
 
   /**
-* sensor info data structure
-*/
+   * sensor info data structure
+   */
   struct SensorInfoData
   {
     SensorInfoData(sensor_info_t const& info);
@@ -732,7 +730,6 @@ namespace cuvis
     double integration_time;
   };
 
-
   class cuvis_sdk_exception : public std::exception
   {
   public:
@@ -747,60 +744,58 @@ namespace cuvis
     std::wstring const _wmsg;
   };
 
-
   class General
   {
   public:
     /**
-    * @copydoc cuvis_set_log_level
-    */
+     * @copydoc cuvis_set_log_level
+     */
     static void set_log_level(int_t lvl);
     /**
-    * @copydoc cuvis_set_exception_locale
-    */
+     * @copydoc cuvis_set_exception_locale
+     */
     static void set_exception_locale(std::string const& locale = "");
     /**
-    * @copydoc cuvis_register_log_callback
-    */
+     * @copydoc cuvis_register_log_callback
+     */
     static void register_log_callback(std::function<void(char const*, loglevel_t)> callback, int_t min_lvl);
     /**
-    * @copydoc cuvis_reset_log_callback
-    */
+     * @copydoc cuvis_reset_log_callback
+     */
     static void reset_log_callback();
     /**
-    * @copydoc cuvis_register_log_callback_localized
-    */
+     * @copydoc cuvis_register_log_callback_localized
+     */
     static void register_log_callback_localized(std::function<void(wchar_t const*, loglevel_t)> callback, int_t min_lvl, std::string const& loc_id);
     /**
-    * @copydoc cuvis_reset_log_callback_localized
-    */
+     * @copydoc cuvis_reset_log_callback_localized
+     */
     static void reset_log_callback_localized();
     /**
-    * @copydoc cuvis_version
-    */
+     * @copydoc cuvis_version
+     */
     static std::string version();
     /**
-    * @copydoc cuvis_init
-    */
+     * @copydoc cuvis_init
+     */
     static void init(std::string const& settings_path, int global_loglevel = 4, std ::string logfile_name = "");
     /**
-    * @copydoc cuvis_shutdown
-    */
+     * @copydoc cuvis_shutdown
+     */
     static void shutdown();
 
     /**
-    * @copydoc cuvis_register_event_callback
-    */
+     * @copydoc cuvis_register_event_callback
+     */
     static int_t register_event_callback(cpp_event_callback_t callback, int_t i_type);
     /**
-    * @copydoc cuvis_unregister_event_callback
-    */
+     * @copydoc cuvis_unregister_event_callback
+     */
     static void unregister_event_callback(int_t i_handler_id);
   };
 
-
   /** @brief central measurement class
-    */
+   */
   class Measurement
   {
   public:
@@ -815,7 +810,6 @@ namespace cuvis
   public:
     using image_variant_t = std::variant<image_t<std::uint8_t>, image_t<std::uint16_t>, image_t<std::uint32_t>, image_t<float>>;
 
-
     using gps_data_t = std::map<std::string, cuvis_gps_t>;
     using string_data_t = std::map<std::string, std::string>;
     using image_data_t = std::map<std::string, image_variant_t>;
@@ -829,115 +823,113 @@ namespace cuvis
     Measurement(Measurement&& measurement) = default;
 
     /**
-    * @copydoc cuvis_measurement_deep_copy
-    */
+     * @copydoc cuvis_measurement_deep_copy
+     */
     Measurement(Measurement const& source);
 
     /**
-    * @copydoc cuvis_measurement_load
-    */
+     * @copydoc cuvis_measurement_load
+     */
     Measurement(std::filesystem::path const& path);
 
     /** @brief Get the capabilites of the measurement which were present in the calibration during capture.
-    * This doesn't indicate which capabilities are currently available for the measurement.
-    */
+     * This doesn't indicate which capabilities are currently available for the measurement.
+     */
     std::vector<capabilities_t> get_capabilities() const;
 
     /** @brief Get the metadata of the measurement
-    * 
-    * The meta-data from the measurement contains information about
-    * the measurement when it was recorded: when and how. Meta-Data
-    * do not contain the actual recorded data.
-    */
+     *
+     * The meta-data from the measurement contains information about
+     * the measurement when it was recorded: when and how. Meta-Data
+     * do not contain the actual recorded data.
+     */
     MeasurementMetaData const* get_meta() const;
 
     /** @brief Get image info data from measurement
-   *
-   * Return image data from a measurement.
-   */
+     *
+     * Return image data from a measurement.
+     */
     sensor_info_data_t const* get_sensor_info() const;
 
     /** @brief Get GPS data from measurement
-      */
+     */
     gps_data_t const* get_gps() const { return _gps_data.get(); }
 
     /**  @brief Get image data from measurement
-    *
-    * Return image data from measurement.
-    */
+     *
+     * Return image data from measurement.
+     */
     image_data_t const* get_imdata() const { return _image_data.get(); }
 
     /** @brief Get string data from measurement
-      */
+     */
     string_data_t const* get_strdata() const { return _string_data.get(); }
 
     /** @brief Get thumbnail / preview image of measurement
-    * 
-    */
+     *
+     */
     image_t<std::uint8_t> const* get_thumbnail() const;
     /** @brief get calibration id of this measurement
-    */
+     */
     std::string get_calib_id() const;
 
-    /** @brief Save measurement 
-    * 
-    * Save the measurement with given arguments
-    * 
-    * @param args The Save Arguments to use for saving the measurement. See also @ref SaveArgs
-    */
+    /** @brief Save measurement
+     *
+     * Save the measurement with given arguments
+     *
+     * @param args The Save Arguments to use for saving the measurement. See also @ref SaveArgs
+     */
     void save(SaveArgs const& args);
 
     /** @brief Set name of measurement
-    * 
-    *   @param name String to use as name of the measuremen
-    */
+     *
+     *   @param name String to use as name of the measuremen
+     */
     void set_name(std::string const& name);
 
     /** @brief set comment of measurement
-    * @param comment String to use as comment for the measurement
-    */
+     * @param comment String to use as comment for the measurement
+     */
     void set_comment(std::string const& comment);
 
     /** @brief clears the cube from the measurement
-    * 
-    * Clears the proceessing result, i. e. the cube, from the measurement. This returns the measurement the state before
-    * applying the processing. This can be usefull for reduced data usage.
-    */
+     *
+     * Clears the proceessing result, i. e. the cube, from the measurement. This returns the measurement the state before
+     * applying the processing. This can be usefull for reduced data usage.
+     */
     void clear_cube();
 
     /**@brief Clear the implicit reference measurement
-    * 
-    * Implict measurements are created, when a measurement is processed with a processing context, where 
-    * explicit references are set. Then, these references are remebemred by the measurement. When changing
-    * the processing context, the references are implicitly available, still. Clearing them may be interesing
-    * if the references set are wrong/invalid or if disk space is a concearn.
-    * 
-    * @param type Type of reference to clear
-    */
+     *
+     * Implict measurements are created, when a measurement is processed with a processing context, where
+     * explicit references are set. Then, these references are remebemred by the measurement. When changing
+     * the processing context, the references are implicitly available, still. Clearing them may be interesing
+     * if the references set are wrong/invalid or if disk space is a concearn.
+     *
+     * @param type Type of reference to clear
+     */
     void clear_implicit_reference(reference_type_t type);
 
     /**@brief Resynchronize the Measurement with the SDK data
-    * 
-	* usally this does not have to be called manually, but is rather called internally by any operation that may result in invalidated (meta-)data
-    * */
+     *
+     * usally this does not have to be called manually, but is rather called internally by any operation that may result in invalidated (meta-)data
+     * */
     void refresh();
 
     /** @brief Expert: Return the current handle of the wrapper class */
     CUVIS_MESU get_handle() const;
     /** @brief Expert: Create a copy of the current handle of the wrapper class and return it.
-    * This handle needs to be also freed before the resource will be released by the sdk.
-    */
+     * This handle needs to be also freed before the resource will be released by the sdk.
+     */
     CUVIS_MESU get_handle_copy() const;
 
   public:
     /** @brief Expert: Create a wrapper class around a handle.
-    * This only allowed once per handle, otherwise the handle could be freed before all instances of the wrapper class are deleted. 
-    * This can be useful if a previously a handle has been copied and now should be wrapped at another place in a program.
-    * Most of the time this is not necesarry and the wrapper class can be copied just as well
-    */
+     * This only allowed once per handle, otherwise the handle could be freed before all instances of the wrapper class are deleted.
+     * This can be useful if a previously a handle has been copied and now should be wrapped at another place in a program.
+     * Most of the time this is not necesarry and the wrapper class can be copied just as well
+     */
     Measurement(CUVIS_MESU handle);
-
-
 
   private:
     std::shared_ptr<CUVIS_MESU> _mesu;
@@ -952,8 +944,8 @@ namespace cuvis
   };
 
   /**
-  * central calibration Class
-  */
+   * central calibration Class
+   */
   class Calibration
   {
     friend class ProcessingContext;
@@ -961,76 +953,76 @@ namespace cuvis
 
   public:
     /** @brief Create a calibration from factory path
-    *
-    * The calibration is created from a factory path, containing the license and calibration
-    * file "init.daq" as well as further calibration files (e.g. SpRad.cu3).
-    *
-    * The calibration is lazy-loading, i.e. the AcquisitionContext and the
-    * ProcessingContext will only be initialized, when explicitly called.
-    *
-    * @note do not load multiple calibration instances of the same camera
-    *
-    * @param[in] path The path to the factory directory
-    */
+     *
+     * The calibration is created from a factory path, containing the license and calibration
+     * file "init.daq" as well as further calibration files (e.g. SpRad.cu3).
+     *
+     * The calibration is lazy-loading, i.e. the AcquisitionContext and the
+     * ProcessingContext will only be initialized, when explicitly called.
+     *
+     * @note do not load multiple calibration instances of the same camera
+     *
+     * @param[in] path The path to the factory directory
+     */
     Calibration(std::filesystem::path const& path);
 
     /** @brief Create a calibration from session file
-    *
-    * Create a calibration from an existion session file.
-    *
-    * The calibration is lazy-loading, i.e. the AcquisitionContext and the
-    * ProcessingContext will only be initialized, when explicitly called.
-    * 
-    * When you create a processing context from the calibration cerated with
-    * this function, you won't have the references from the session file set.
-    * Use @ref cuvis_proc_cont_create_from_session_file to load a processing context
-    * where the referenecs are taken from the session file.
-    *
-    * @note do not load multiple calibration instances of the same camera
-    *
-    * @param[in] session The session file
-    */
+     *
+     * Create a calibration from an existion session file.
+     *
+     * The calibration is lazy-loading, i.e. the AcquisitionContext and the
+     * ProcessingContext will only be initialized, when explicitly called.
+     *
+     * When you create a processing context from the calibration cerated with
+     * this function, you won't have the references from the session file set.
+     * Use @ref cuvis_proc_cont_create_from_session_file to load a processing context
+     * where the referenecs are taken from the session file.
+     *
+     * @note do not load multiple calibration instances of the same camera
+     *
+     * @param[in] session The session file
+     */
     Calibration(SessionFile const& session);
 
     /**
-    * @brief get calibration capabilities
-    * 
-    * @param mode Operation mode of the camera see also @ref cuvis_operation_mode_t
-    */
+     * @brief get calibration capabilities
+     *
+     * @param mode Operation mode of the camera see also @ref cuvis_operation_mode_t
+     */
     std::vector<capabilities_t> get_capabilities(CUVIS_OPERATION_MODE mode) const;
 
     /**
-    * @brief get calibration infos
-    */
+     * @brief get calibration infos
+     */
     CalibrationInfo get_info() const;
     /**
-    * @brief get the calibration id
-    */
+     * @brief get the calibration id
+     */
     std::string get_id() const;
 
     /**
-    * @brief get number of components
-    */
+     * @brief get number of components
+     */
     int_t get_component_count() const;
 
     /**
-    * @brief get a components information
-    */
+     * @brief get a components information
+     */
     CUVIS_COMPONENT_INFO get_component_info(int_t id) const;
 
     /** @brief Expert: Return the current handle of the wrapper class */
     CUVIS_CALIB get_handle() const;
     /** @brief Expert: Create a copy of the current handle of the wrapper class and return it.
-    * This handle needs to be also freed before the resource will be released by the sdk.
-    */
+     * This handle needs to be also freed before the resource will be released by the sdk.
+     */
     CUVIS_CALIB get_handle_copy() const;
 
   public:
     /** @brief Expert: Create a wrapper class around a handle.
-    * This only allowed once per handle, otherwise the handle could be freed before all instances of the wrapper class are deleted. 
-    * This can be useful if a previously a handle has been copied and now should be wrapped at another place in a program.
-    * Most of the time this is not necesarry and the wrapper class can be copied just as well
-    */
+     * This only allowed once per handle, otherwise the handle could be freed before all instances of the wrapper class are deleted.
+     * This can be useful if a previously a handle has been copied and now should be wrapped at another place in a program.
+     * Most of the time this is not necesarry and the wrapper class can be copied just as well
+     */
     Calibration(CUVIS_CALIB handle);
 
   private:
@@ -1054,36 +1046,35 @@ namespace cuvis
     common_image_t<std::uint8_t> get_thumbnail() const;
 
     /**
-    * @brief get size of the SessionFile
-    */
+     * @brief get size of the SessionFile
+     */
     int_t get_size(cuvis_session_item_type_t type = cuvis_session_item_type_t::session_item_type_frames) const;
 
-
     /**
-    * @brief get the frame rate of this session
-    */
+     * @brief get the frame rate of this session
+     */
     double get_fps() const;
 
     std::string get_hash() const;
 
     /**
-    * @brief get operation mode of the session
-    */
+     * @brief get operation mode of the session
+     */
     CUVIS_OPERATION_MODE get_operation_mode() const;
 
     /** @brief Expert: Return the current handle of the wrapper class */
     CUVIS_SESSION_FILE get_handle() const;
     /** @brief Expert: Create a copy of the current handle of the wrapper class and return it.
-    * This handle needs to be also freed before the resource will be released by the sdk.
-    */
+     * This handle needs to be also freed before the resource will be released by the sdk.
+     */
     CUVIS_SESSION_FILE get_handle_copy() const;
 
   public:
     /** @brief Expert: Create a wrapper class around a handle.
-    * This only allowed once per handle, otherwise the handle could be freed before all instances of the wrapper class are deleted. 
-    * This can be useful if a previously a handle has been copied and now should be wrapped at another place in a program.
-    * Most of the time this is not necesarry and the wrapper class can be copied just as well
-    */
+     * This only allowed once per handle, otherwise the handle could be freed before all instances of the wrapper class are deleted.
+     * This can be useful if a previously a handle has been copied and now should be wrapped at another place in a program.
+     * Most of the time this is not necesarry and the wrapper class can be copied just as well
+     */
     SessionFile(CUVIS_SESSION_FILE handle);
 
   private:
@@ -1095,54 +1086,54 @@ namespace cuvis
     friend class Worker;
 
   public:
-    //Builders
+    // Builders
     ProcessingContext(Calibration const& calib);
     ProcessingContext(Measurement const& mesu);
     ProcessingContext(SessionFile const& session);
-    //Apply
+    // Apply
     Measurement& apply(Measurement& mesu) const;
     bool calc_distance(double distMM);
 
   public:
-    //setters
+    // setters
 
     /**
-    * @brief Set the reference for processing context
-    *  
-    * @param mesu measurement The measurement to be used as explicit reference
-    * @param type Type of reference to set
-    */
+     * @brief Set the reference for processing context
+     *
+     * @param mesu measurement The measurement to be used as explicit reference
+     * @param type Type of reference to set
+     */
     void set_reference(Measurement const& mesu, reference_type_t type);
 
     /**
-    * @brief Clear a reference measurement
-    * 
-    * @param type Type of reference to clear
-    */
+     * @brief Clear a reference measurement
+     *
+     * @param type Type of reference to clear
+     */
     void clear_reference(reference_type_t type);
     /**
-    * @brief set the processing arguments for the processing context
-    * 
-    * @param procArgs arguments to set
-    */
+     * @brief set the processing arguments for the processing context
+     *
+     * @param procArgs arguments to set
+     */
     void set_processingArgs(ProcessingArgs const& procArgs);
 
-    //getters
+    // getters
     /**
-    * @brief get a specific reference from the processing context
-    *
-    * The processing context can hold explicit references (e.g. a dark),
-    * see @ref ProcessingArgs.set_reference . These reference can be obtained
-    * by this functions
-    */
+     * @brief get a specific reference from the processing context
+     *
+     * The processing context can hold explicit references (e.g. a dark),
+     * see @ref ProcessingArgs.set_reference . These reference can be obtained
+     * by this functions
+     */
     std::optional<Measurement> get_reference(reference_type_t type) const;
 
     /**
-    * @brief get the arguments of the processing context
-    */
+     * @brief get the arguments of the processing context
+     */
     ProcessingArgs const& get_processingArgs() const;
 
-    //checkers
+    // checkers
     /**
     @brief Check if a processing mode is possible for a measurement
     *
@@ -1156,29 +1147,29 @@ namespace cuvis
     bool is_capable(Measurement const& mesu, ProcessingArgs const& procArgs) const;
 
     /**
-    * @brief Check if an explicit reference was set
-    * 
-    * @param type reference type to check for
-    */
+     * @brief Check if an explicit reference was set
+     *
+     * @param type reference type to check for
+     */
     bool has_reference(reference_type_t type) const;
     /**
-    * @brief get the calibration id of the procession context
-    */
+     * @brief get the calibration id of the procession context
+     */
     std::string get_calib_id() const;
 
     /** @brief Expert: Return the current handle of the wrapper class */
     CUVIS_PROC_CONT get_handle() const;
     /** @brief Expert: Create a copy of the current handle of the wrapper class and return it.
-    * This handle needs to be also freed before the resource will be released by the sdk.
-    */
+     * This handle needs to be also freed before the resource will be released by the sdk.
+     */
     CUVIS_PROC_CONT get_handle_copy() const;
 
   public:
     /** @brief Expert: Create a wrapper class around a handle.
-    * This only allowed once per handle, otherwise the handle could be freed before all instances of the wrapper class are deleted. 
-    * This can be useful if a previously a handle has been copied and now should be wrapped at another place in a program.
-    * Most of the time this is not necesarry and the wrapper class can be copied just as well
-    */
+     * This only allowed once per handle, otherwise the handle could be freed before all instances of the wrapper class are deleted.
+     * This can be useful if a previously a handle has been copied and now should be wrapped at another place in a program.
+     * Most of the time this is not necesarry and the wrapper class can be copied just as well
+     */
     ProcessingContext(CUVIS_PROC_CONT handle);
 
   private:
@@ -1212,12 +1203,9 @@ namespace cuvis
   public:
     std::pair<async_result_t, std::optional<Measurement>> get(std::chrono::milliseconds waittime = std::chrono::milliseconds(0));
 
-
   private:
     std::shared_ptr<CUVIS_ASYNC_CAPTURE_RESULT> _async;
   }; // namespace cuvis
-
-
 
   class AcquisitionContext
   {
@@ -1234,7 +1222,6 @@ namespace cuvis
     using mesu_callback_t = std::function<void(Measurement)>;
     using component_state_t = std::pair<std::string, bool>;
     using state_callback_t = std::function<void(hardware_state_t, std::map<int_t, component_state_info_t>)>;
-
 
   public:
     AcquisitionContext(Calibration const& calib);
@@ -1261,7 +1248,6 @@ namespace cuvis
 
     void register_state_change_callback(state_callback_t callback, bool output_initial_state = true);
     void reset_state_change_callback();
-
 
 #define ACQ_STUB_0a(funname, sdkname, type_ifcae, type_wrapped) \
   type_wrapped get_##funname() const                            \
@@ -1305,7 +1291,7 @@ namespace cuvis
 
     ACQ_STUB_0b(continuous, cuvis_acq_cont_continuous, int_t, int);
 
-    //ACQ_STUB_0b(queue_size, cuvis_acq_cont_queue_size, int_t, int);
+    // ACQ_STUB_0b(queue_size, cuvis_acq_cont_queue_size, int_t, int);
 
 #undef ACQ_STUB_0a
 #undef ACQ_STUB_0b
@@ -1353,16 +1339,16 @@ namespace cuvis
     /** @brief Expert: Return the current handle of the wrapper class */
     CUVIS_ACQ_CONT get_handle() const;
     /** @brief Expert: Create a copy of the current handle of the wrapper class and return it.
-    * This handle needs to be also freed before the resource will be released by the sdk.
-    */
+     * This handle needs to be also freed before the resource will be released by the sdk.
+     */
     CUVIS_ACQ_CONT get_handle_copy() const;
 
   public:
     /** @brief Expert: Create a wrapper class around a handle.
-    * This only allowed once per handle, otherwise the handle could be freed before all instances of the wrapper class are deleted. 
-    * This can be useful if a previously a handle has been copied and now should be wrapped at another place in a program.
-    * Most of the time this is not necesarry and the wrapper class can be copied just as well
-    */
+     * This only allowed once per handle, otherwise the handle could be freed before all instances of the wrapper class are deleted.
+     * This can be useful if a previously a handle has been copied and now should be wrapped at another place in a program.
+     * Most of the time this is not necesarry and the wrapper class can be copied just as well
+     */
     AcquisitionContext(CUVIS_ACQ_CONT handle);
 
   private:
@@ -1381,7 +1367,6 @@ namespace cuvis
     using view_variant_t = std::variant<view_t<std::uint8_t>, view_t<float>>;
     using view_data_t = std::map<std::string, view_variant_t>;
 
-
   public:
     Viewer(ViewArgs const& args);
     view_data_t apply(Measurement const& mesu);
@@ -1389,16 +1374,16 @@ namespace cuvis
     /** @brief Expert: Return the current handle of the wrapper class */
     CUVIS_VIEWER get_handle() const;
     /** @brief Expert: Create a copy of the current handle of the wrapper class and return it.
-    * This handle needs to be also freed before the resource will be released by the sdk.
-    */
+     * This handle needs to be also freed before the resource will be released by the sdk.
+     */
     CUVIS_VIEWER get_handle_copy() const;
 
   public:
     /** @brief Expert: Create a wrapper class around a handle.
-    * This only allowed once per handle, otherwise the handle could be freed before all instances of the wrapper class are deleted. 
-    * This can be useful if a previously a handle has been copied and now should be wrapped at another place in a program.
-    * Most of the time this is not necesarry and the wrapper class can be copied just as well
-    */
+     * This only allowed once per handle, otherwise the handle could be freed before all instances of the wrapper class are deleted.
+     * This can be useful if a previously a handle has been copied and now should be wrapped at another place in a program.
+     * Most of the time this is not necesarry and the wrapper class can be copied just as well
+     */
     Viewer(CUVIS_VIEWER handle);
 
   private:
@@ -1525,7 +1510,6 @@ namespace cuvis
   private:
     std::shared_ptr<CUVIS_WORKER> _worker;
 
-
     std::atomic_bool _worker_poll_thread_run = false;
     mutable std::mutex _worker_poll_thread_lock;
     std::shared_ptr<std::thread> _worker_poll_thread;
@@ -1534,7 +1518,6 @@ namespace cuvis
   /** \cond INTERNAL */
 
   // implementation part
-
 
   inline void chk(CUVIS_STATUS status)
   {
@@ -1559,7 +1542,6 @@ namespace cuvis
     });
     refresh();
   }
-
 
   inline Measurement::Measurement(std::filesystem::path const& path)
       : _gps_data(std::make_shared<gps_data_t>()),
@@ -1597,8 +1579,6 @@ namespace cuvis
     refresh();
   }
 
-
-
   inline void Measurement::set_name(std::string const& name)
   {
     chk(cuvis_measurement_set_name(*_mesu, name.c_str()));
@@ -1616,7 +1596,6 @@ namespace cuvis
     chk(cuvis_measurement_clear_cube(*_mesu));
     refresh();
   }
-
 
   inline void Measurement::clear_implicit_reference(reference_type_t type)
   {
@@ -1640,10 +1619,8 @@ namespace cuvis
         chk(cuvis_measurement_get_data_string(*_mesu, key.c_str(), buffer_length, value));
         //_string_data->emplace(std::string(key), std::string(value));
 
-
-
-        //CUVIS_CHAR value[CUVIS_MAXBUF];
-        //chk(cuvis_measurement_get_data_string(*_mesu, key.c_str(), CUVIS_MAXBUF, value));
+        // CUVIS_CHAR value[CUVIS_MAXBUF];
+        // chk(cuvis_measurement_get_data_string(*_mesu, key.c_str(), CUVIS_MAXBUF, value));
         _meta->measurement_flags.emplace(key, value);
 
         delete[] value;
@@ -1751,7 +1728,7 @@ namespace cuvis
               _image_data->emplace(std::string(key), image);
             }
             break;
-            default: //unknown or unsupported
+            default: // unknown or unsupported
               throw std::runtime_error("unsupported measurement data bit depth");
               break;
           }
@@ -2036,7 +2013,6 @@ namespace cuvis
     return out;
   }
 
-
   inline bool Worker::get_can_drop_results()
   {
     CUVIS_INT canDrop;
@@ -2128,7 +2104,6 @@ namespace cuvis
     return limit;
   }
 
-
   inline size_t Worker::get_queue_used() const
   {
     int_t size;
@@ -2155,7 +2130,7 @@ namespace cuvis
     try
     {
       chk(code);
-      //transforms into exception
+      // transforms into exception
     }
     catch (cuvis::cuvis_sdk_exception const&)
     {
@@ -2219,8 +2194,7 @@ namespace cuvis
     std::lock_guard<std::mutex> lock(_worker_poll_thread_lock);
     _worker_poll_thread_run = true;
 
-    _worker_poll_thread = std::make_shared<std::thread>([this, callback, concurrency, measurement_timeout_ms]
-                                      {
+    _worker_poll_thread = std::make_shared<std::thread>([this, callback, concurrency, measurement_timeout_ms] {
       std::deque<std::future<void>> async_tasks;
       while (_worker_poll_thread_run.load())
       {
@@ -2301,7 +2275,6 @@ namespace cuvis
     CUVIS_VIEW current_view;
     chk(cuvis_viewer_apply(*_viewer, *mesu._mesu, &current_view));
 
-
     return create_view_data(current_view);
   }
   inline Viewer::view_data_t Viewer::create_view_data(CUVIS_VIEW current_view)
@@ -2313,7 +2286,6 @@ namespace cuvis
       delete handle;
     });
 
-
     int_t numel;
     chk(cuvis_view_get_data_count(current_view, &numel));
 
@@ -2322,10 +2294,7 @@ namespace cuvis
       cuvis_view_data_t view_data;
       chk(cuvis_view_get_data(current_view, k, &view_data));
 
-
       cuvis_imbuffer_t const& im = view_data.data;
-
-
 
       switch (im.format)
       {
@@ -2359,7 +2328,7 @@ namespace cuvis
         }
 
         break;
-        default: //unknown or unsupported
+        default: // unknown or unsupported
           throw std::runtime_error("unsupported view bit depth");
           break;
       }
@@ -2397,7 +2366,7 @@ namespace cuvis
   {
     CUVIS_ACQ_CONT acqCont;
     chk(cuvis_acq_cont_create_from_session_file(*sess._session, simulate, &acqCont));
-    //chk(cuvis_proc_cont_create_from_session_file(*sess._session, &acqCont));
+    // chk(cuvis_proc_cont_create_from_session_file(*sess._session, &acqCont));
     _acqCont = std::shared_ptr<CUVIS_ACQ_CONT>(new CUVIS_ACQ_CONT{acqCont}, [](CUVIS_ACQ_CONT* handle) {
       cuvis_acq_cont_free(handle);
       delete handle;
@@ -2419,7 +2388,6 @@ namespace cuvis
     chk(cuvis_acq_cont_copy_handle(*_acqCont, &new_handle));
     return new_handle;
   }
-
 
   inline void AcquisitionContext::register_state_change_callback(state_callback_t callback, bool output_initial_state)
   {
@@ -2480,7 +2448,6 @@ namespace cuvis
       _state_poll_thread.join();
     }
   }
-
 
   inline Measurement const& Exporter::apply(Measurement const& mesu) const
   {
@@ -2645,7 +2612,6 @@ namespace cuvis
     return has_next != 0;
   }
 
-
   inline SessionInfo AcquisitionContext::get_session_info() const
   {
     CUVIS_SESSION_INFO session;
@@ -2769,8 +2735,6 @@ namespace cuvis
     inline void SDK_CCALL custom_log_localized(wchar_t const* msg, loglevel_t lvl) { log_callback_localized_fun(msg, lvl); }
   } // namespace log_impl
 
-
-
   inline void General::register_log_callback(std::function<void(char const*, loglevel_t)> callback, int_t min_lvl)
   {
     const std::lock_guard<std::mutex> lock(log_impl::log_callback_fun_mutex);
@@ -2881,7 +2845,6 @@ namespace cuvis
     return size;
   }
 
-
   inline double SessionFile::get_fps() const
   {
     double fps;
@@ -2922,8 +2885,6 @@ namespace cuvis
     return _data[((y)*_width + (x)) * _channels + (z)];
   }
 
-
-
   inline GeneralExportArgs::GeneralExportArgs()
       : export_dir("."),
         channel_selection("all"),
@@ -2954,7 +2915,7 @@ namespace cuvis
   }
 
   inline SaveArgs::SaveArgs()
-      : allow_fragmentation(false),
+      : merge_mode(session_merge_mode_t::session_merge_mode_Default),
         allow_overwrite(false),
         allow_drop(false),
         allow_session_file(true),
@@ -2969,7 +2930,7 @@ namespace cuvis
   inline SaveArgs::operator cuvis_save_args_t() const
   {
     cuvis_save_args_t save_args;
-    save_args.allow_fragmentation = static_cast<int32_t>(allow_fragmentation);
+    save_args.merge_mode = merge_mode;
     save_args.allow_overwrite = static_cast<int32_t>(allow_overwrite);
     save_args.allow_drop = static_cast<int32_t>(allow_drop);
     save_args.allow_session_file = static_cast<int32_t>(allow_session_file);
@@ -3026,7 +2987,6 @@ namespace cuvis
     args.format = format;
     return args;
   }
-
 
   inline WorkerArgs::WorkerArgs()
       : input_queue_size(10),
@@ -3113,7 +3073,6 @@ namespace cuvis
       distance.reset();
     }
 
-
     session_info = SessionInfo();
     session_info.name = meta.session_info_name;
     session_info.sequence_no = meta.session_info_sequence_no;
@@ -3133,7 +3092,6 @@ namespace cuvis
     pixel_format = std::string(info.pixel_format);
     integration_time = info.integration_time;
   }
-
 
   inline cuvis_sdk_exception::cuvis_sdk_exception(std::string const& msg, std::wstring const& wmsg) : _msg(msg), _wmsg(wmsg) {}
 
