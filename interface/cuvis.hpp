@@ -301,10 +301,10 @@ namespace cuvis
      * */
     pan_sharpening_algorithm_t pan_algorithm;
 
-    /**
-     * @copydoc cuvis_viewer_settings_t.blend_opacity
-     */
-    double blend_opacity;
+    /** 
+      * @copydoc cuvis_viewer_settings_t.pre_pan_sharpen_cube
+      */
+    bool pre_pan_sharpen_cube;
 
     /** @brief Add the pan image to the output (default: @ref false)
      *
@@ -456,14 +456,9 @@ namespace cuvis
      */
     std::string userplugin;
 
-    /**
-     * @copydoc cuvis_viewer_settings_t.pre_pan_sharpen_cube
-     */
-    bool pre_pan_sharpen_cube;
-
-    /**
-     * @copydoc cuvis_viewer_settings_t.complete
-     */
+    /** 
+      * @copydoc cuvis_viewer_settings_t.complete
+      */
     bool complete;
 
     /**
@@ -471,6 +466,7 @@ namespace cuvis
      */
     bool pan_failback;
   };
+
   /** @brief processing arguments */
   struct ProcessingArgs
   {
@@ -1368,7 +1364,7 @@ namespace cuvis
     using view_data_t = std::map<std::string, view_variant_t>;
 
   public:
-    Viewer(ViewArgs const& args);
+    Viewer(GeneralExportArgs const& generalArgs, ViewArgs const& args);
     view_data_t apply(Measurement const& mesu);
 
     /** @brief Expert: Return the current handle of the wrapper class */
@@ -2244,10 +2240,10 @@ namespace cuvis
     }
   }
 
-  inline Viewer::Viewer(ViewArgs const& args)
+  inline Viewer::Viewer(GeneralExportArgs const& generalArgs, ViewArgs const& args)
   {
     CUVIS_VIEWER viewer;
-    chk(cuvis_viewer_create(&viewer, args));
+    chk(cuvis_viewer_create(&viewer, generalArgs, args));
     _viewer = std::shared_ptr<CUVIS_VIEWER>(new CUVIS_VIEWER{viewer}, [](CUVIS_VIEWER* handle) {
       cuvis_viewer_free(handle);
       delete handle;
@@ -2895,7 +2891,7 @@ namespace cuvis
         add_pan(false),
         add_fullscale_pan(false),
         permissive(false),
-        blend_opacity(0.0)
+        pre_pan_sharpen_cube(true)
   {}
 
   inline GeneralExportArgs::operator cuvis_export_general_settings_t() const
@@ -2907,10 +2903,10 @@ namespace cuvis
     ges.pan_scale = pan_scale;
     ges.pan_interpolation_type = pan_interpolation_type;
     ges.pan_algorithm = pan_algorithm;
+    ges.pre_pan_sharpen_cube = static_cast<int_t>(pre_pan_sharpen_cube);
     ges.add_pan = static_cast<int_t>(add_pan);
     ges.add_fullscale_pan = static_cast<int_t>(add_fullscale_pan);
     ges.permissive = static_cast<int_t>(permissive);
-    ges.blend_opacity = blend_opacity;
     return ges;
   }
 
@@ -2953,18 +2949,13 @@ namespace cuvis
     return proc_args;
   }
 
-  inline ViewArgs::ViewArgs() : userplugin(), complete(false), pre_pan_sharpen_cube(false), pan_failback(true) {}
+  inline ViewArgs::ViewArgs() : userplugin(), complete(false), pan_failback(true) {}
 
   inline ViewArgs::operator cuvis_viewer_settings_t() const
   {
     cuvis_viewer_settings_t args;
     args.userplugin = userplugin.c_str();
-    args.pan_scale = pan_scale;
-    args.pan_interpolation_type = pan_interpolation_type;
-    args.pan_algorithm = pan_algorithm;
-    args.pre_pan_sharpen_cube = pre_pan_sharpen_cube;
     args.complete = complete;
-    args.blend_opacity = blend_opacity;
     args.pan_failback = pan_failback ? 1 : 0;
 
     return args;
@@ -2973,6 +2964,7 @@ namespace cuvis
   {
     cuvis_export_view_settings_t args;
     args.userplugin = userplugin.c_str();
+    args.complete = complete ? 1 : 0;
     args.pan_failback = pan_failback ? 1 : 0;
 
     return args;
