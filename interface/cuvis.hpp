@@ -1364,7 +1364,7 @@ namespace cuvis
     using view_data_t = std::map<std::string, view_variant_t>;
 
   public:
-    Viewer(GeneralExportArgs const& generalArgs, ViewArgs const& args);
+    Viewer(ViewArgs const& args);
     view_data_t apply(Measurement const& mesu);
 
     /** @brief Expert: Return the current handle of the wrapper class */
@@ -2240,10 +2240,10 @@ namespace cuvis
     }
   }
 
-  inline Viewer::Viewer(GeneralExportArgs const& generalArgs, ViewArgs const& args)
+  inline Viewer::Viewer(ViewArgs const& args)
   {
     CUVIS_VIEWER viewer;
-    chk(cuvis_viewer_create(&viewer, generalArgs, args));
+    chk(cuvis_viewer_create(&viewer, args, args));
     _viewer = std::shared_ptr<CUVIS_VIEWER>(new CUVIS_VIEWER{viewer}, [](CUVIS_VIEWER* handle) {
       cuvis_viewer_free(handle);
       delete handle;
