@@ -1088,8 +1088,8 @@ namespace cuvis
   public:
     // Builders
     ProcessingContext(Calibration const& calib);
-    ProcessingContext(Measurement const& mesu);
-    ProcessingContext(SessionFile const& session);
+    ProcessingContext(Measurement const& mesu, bool load_references = true);
+    ProcessingContext(SessionFile const& session, bool load_references = true);
     // Apply
     Measurement& apply(Measurement& mesu) const;
     bool calc_distance(double distMM);
@@ -1874,20 +1874,20 @@ namespace cuvis
     });
   }
 
-  inline ProcessingContext::ProcessingContext(Measurement const& mesu)
+  inline ProcessingContext::ProcessingContext(Measurement const& mesu, bool load_references)
   {
     CUVIS_PROC_CONT procCont;
-    chk(cuvis_proc_cont_create_from_mesu(*mesu._mesu, &procCont));
+    chk(cuvis_proc_cont_create_from_mesu(*mesu._mesu, load_references ? 1 : 0, &procCont));
     _procCont = std::shared_ptr<CUVIS_PROC_CONT>(new CUVIS_PROC_CONT{procCont}, [](CUVIS_PROC_CONT* handle) {
       cuvis_proc_cont_free(handle);
       delete handle;
     });
   }
 
-  inline ProcessingContext::ProcessingContext(SessionFile const& session)
+  inline ProcessingContext::ProcessingContext(SessionFile const& session, bool load_references)
   {
     CUVIS_PROC_CONT procCont;
-    chk(cuvis_proc_cont_create_from_session_file(*session._session, &procCont));
+    chk(cuvis_proc_cont_create_from_session_file(*session._session,load_references ? 1 : 0, &procCont));
     _procCont = std::shared_ptr<CUVIS_PROC_CONT>(new CUVIS_PROC_CONT{procCont}, [](CUVIS_PROC_CONT* handle) {
       cuvis_proc_cont_free(handle);
       delete handle;
