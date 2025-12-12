@@ -1262,6 +1262,12 @@ namespace cuvis
     void register_state_change_callback(state_callback_t callback, bool output_initial_state = true);
     void reset_state_change_callback();
 
+    bool get_dead_pixel_correction_available() const;
+    
+    bool get_dead_pixel_correction_enabled() const;
+
+    void set_dead_pixel_correction_enabled(bool enable);
+
 #define ACQ_STUB_0a(funname, sdkname, type_ifcae, type_wrapped) \
   type_wrapped get_##funname() const                            \
   {                                                             \
@@ -2460,6 +2466,24 @@ namespace cuvis
     {
       _state_poll_thread.join();
     }
+  }
+
+  
+  inline bool AcquisitionContext::get_dead_pixel_correction_available() const { 
+    CUVIS_INT available;
+    chk(cuvis_acq_cont_dead_pixel_correction_available_get(*_acqCont, &available));
+    return available != 0;
+  }
+
+  inline bool AcquisitionContext::get_dead_pixel_correction_enabled() const {
+    CUVIS_INT enabled;
+    chk(cuvis_acq_cont_dead_pixel_correction_enabled_get(*_acqCont, &enabled));
+    return enabled != 0;
+  }
+  inline void AcquisitionContext::set_dead_pixel_correction_enabled(bool enable)
+  {
+    CUVIS_INT value = enable ? 1 : 0;
+    chk(cuvis_acq_cont_dead_pixel_correction_enabled_set(*_acqCont, value));
   }
 
   inline Measurement const& Exporter::apply(Measurement const& mesu) const
