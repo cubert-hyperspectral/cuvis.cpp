@@ -44,6 +44,7 @@ namespace cuvis
 
   struct ProcessingArgs;
 
+  struct PanSharpeningArgs;
   struct SaveArgs;
   struct TiffArgs;
   struct EnviArgs;
@@ -256,20 +257,17 @@ namespace cuvis
     std::shared_ptr<CUVIS_VIEW> _ref;
   };
 
-  /** @brief Export Settings common to all exporters
+  /** @brief Settings defining Pansharpening and channel selection for all exporters
    *
    * The options of this structure can be set for any @ref Exporter. However, not all options are respected by the @ref Exporter.
    * */
-  struct GeneralExportArgs
+  struct PanSharpeningArgs
   {
     /** Constructor to create default parameters */
-    GeneralExportArgs();
+    PanSharpeningArgs();
 
     /** convert to C - SDK settings structure */
-    operator cuvis_export_general_settings_t() const;
-
-    /** The directory where the files should be exported to (default: ".") */
-    std::filesystem::path export_dir;
+    operator cuvis_pansharpening_settings_t() const;
 
     /** @brief The selection of spectral channels to be exproted. (default  : "all")
      *
@@ -301,16 +299,32 @@ namespace cuvis
      * */
     pan_sharpening_algorithm_t pan_algorithm;
 
-    /**
-     * @copydoc cuvis_viewer_settings_t.blend_opacity
-     */
-    double blend_opacity;
+    /** 
+      * @copydoc cuvis_viewer_settings_t.pre_pan_sharpen_cube
+      */
+    bool pre_pan_sharpen_cube;
 
     /** @brief Add the pan image to the output (default: @ref false)
      *
      * @copydoc cuvis_export_general_settings_t.add_pan
      * */
     bool add_pan;
+  };
+
+  /** @brief Export Settings common to all exporters
+   *
+   * The options of this structure can be set for any @ref Exporter. However, not all options are respected by the @ref Exporter.
+   * */
+  struct GeneralExportArgs
+  {
+    /** Constructor to create default parameters */
+    GeneralExportArgs();
+
+    /** convert to C - SDK settings structure */
+    operator cuvis_export_general_settings_t() const;
+
+    /** The directory where the files should be exported to (default: ".") */
+    std::filesystem::path export_dir;
 
     /** @brief Add a full-resolution pan image to the export (default: @ref false)
      *
@@ -318,11 +332,14 @@ namespace cuvis
      * */
     bool add_fullscale_pan;
 
-    /** @brief Set @ref Expor   ter to permisive mode (default: @ref false)
+    /** @brief Set @ref Exporter to permisive mode (default: @ref false)
      *
      * @copydoc cuvis_export_general_settings_t.permissive
      * */
     bool permissive;
+
+    /** @brief Settings to define Pansharpening and channel selection */
+    struct PanSharpeningArgs pansharpening_settings;
   };
 
   /** @brief Options for saving cu3s/cu3 files
@@ -456,14 +473,9 @@ namespace cuvis
      */
     std::string userplugin;
 
-    /**
-     * @copydoc cuvis_viewer_settings_t.pre_pan_sharpen_cube
-     */
-    bool pre_pan_sharpen_cube;
-
-    /**
-     * @copydoc cuvis_viewer_settings_t.complete
-     */
+    /** 
+      * @copydoc cuvis_viewer_settings_t.complete
+      */
     bool complete;
 
     /**
@@ -471,6 +483,7 @@ namespace cuvis
      */
     bool pan_failback;
   };
+
   /** @brief processing arguments */
   struct ProcessingArgs
   {
@@ -1248,6 +1261,12 @@ namespace cuvis
 
     void register_state_change_callback(state_callback_t callback, bool output_initial_state = true);
     void reset_state_change_callback();
+
+    bool get_dead_pixel_correction_available() const;
+    
+    bool get_dead_pixel_correction_enabled() const;
+
+    void set_dead_pixel_correction_enabled(bool enable);
 
 #define ACQ_STUB_0a(funname, sdkname, type_ifcae, type_wrapped) \
   type_wrapped get_##funname() const                            \
@@ -2449,6 +2468,24 @@ namespace cuvis
     }
   }
 
+  
+  inline bool AcquisitionContext::get_dead_pixel_correction_available() const { 
+    CUVIS_INT available;
+    chk(cuvis_acq_cont_dead_pixel_correction_available_get(*_acqCont, &available));
+    return available != 0;
+  }
+
+  inline bool AcquisitionContext::get_dead_pixel_correction_enabled() const {
+    CUVIS_INT enabled;
+    chk(cuvis_acq_cont_dead_pixel_correction_enabled_get(*_acqCont, &enabled));
+    return enabled != 0;
+  }
+  inline void AcquisitionContext::set_dead_pixel_correction_enabled(bool enable)
+  {
+    CUVIS_INT value = enable ? 1 : 0;
+    chk(cuvis_acq_cont_dead_pixel_correction_enabled_set(*_acqCont, value));
+  }
+
   inline Measurement const& Exporter::apply(Measurement const& mesu) const
   {
     chk(cuvis_exporter_apply(*_exporter, *mesu._mesu));
@@ -2885,33 +2922,46 @@ namespace cuvis
     return _data[((y)*_width + (x)) * _channels + (z)];
   }
 
-  inline GeneralExportArgs::GeneralExportArgs()
-      : export_dir("."),
-        channel_selection("all"),
+  inline PanSharpeningArgs::PanSharpeningArgs()
+      : channel_selection("all"),
         spectra_multiplier(1),
         pan_scale(0.0),
         pan_interpolation_type(pan_sharpening_interpolation_type_Linear),
         pan_algorithm(pan_sharpening_algorithm_CubertMacroPixel),
         add_pan(false),
-        add_fullscale_pan(false),
-        permissive(false),
-        blend_opacity(0.0)
+        pre_pan_sharpen_cube(true)
+  {}
+
+  inline GeneralExportArgs::GeneralExportArgs() : export_dir("."), add_fullscale_pan(false), permissive(false), pansharpening_settings({})
   {}
 
   inline GeneralExportArgs::operator cuvis_export_general_settings_t() const
   {
     cuvis_export_general_settings_t ges({});
+    std::strncpy(ges.pansharpening_settings.channel_selection, pansharpening_settings.channel_selection.c_str(), CUVIS_MAXBUF);
+    ges.pansharpening_settings.spectra_multiplier = pansharpening_settings.spectra_multiplier;
+    ges.pansharpening_settings.pan_scale = pansharpening_settings.pan_scale;
+    ges.pansharpening_settings.pan_interpolation_type = pansharpening_settings.pan_interpolation_type;
+    ges.pansharpening_settings.pan_algorithm = pansharpening_settings.pan_algorithm;
+    ges.pansharpening_settings.pre_pan_sharpen_cube = pansharpening_settings.pre_pan_sharpen_cube ? 1 : 0;
+    ges.pansharpening_settings.add_pan = pansharpening_settings.add_pan ? 1 : 0;
     std::strncpy(ges.export_dir, export_dir.string().c_str(), CUVIS_MAXBUF);
-    std::strncpy(ges.channel_selection, channel_selection.c_str(), CUVIS_MAXBUF);
-    ges.spectra_multiplier = spectra_multiplier;
-    ges.pan_scale = pan_scale;
-    ges.pan_interpolation_type = pan_interpolation_type;
-    ges.pan_algorithm = pan_algorithm;
-    ges.add_pan = static_cast<int_t>(add_pan);
-    ges.add_fullscale_pan = static_cast<int_t>(add_fullscale_pan);
-    ges.permissive = static_cast<int_t>(permissive);
-    ges.blend_opacity = blend_opacity;
+    ges.add_fullscale_pan = add_fullscale_pan ? 1 : 0;
+    ges.permissive = permissive ? 1 : 0;
     return ges;
+  }
+
+  inline PanSharpeningArgs::operator cuvis_pansharpening_settings_t() const
+  {
+    cuvis_pansharpening_settings_t pss({});
+    std::strncpy(pss.channel_selection, channel_selection.c_str(), CUVIS_MAXBUF);
+    pss.spectra_multiplier = spectra_multiplier;
+    pss.pan_scale = pan_scale;
+    pss.pan_interpolation_type = pan_interpolation_type;
+    pss.pan_algorithm = pan_algorithm;
+    pss.pre_pan_sharpen_cube = static_cast<int_t>(pre_pan_sharpen_cube);
+    pss.add_pan = static_cast<int_t>(add_pan);
+    return pss;
   }
 
   inline SaveArgs::SaveArgs()
@@ -2953,19 +3003,21 @@ namespace cuvis
     return proc_args;
   }
 
-  inline ViewArgs::ViewArgs() : userplugin(), complete(false), pre_pan_sharpen_cube(false), pan_failback(true) {}
+  inline ViewArgs::ViewArgs() : userplugin(), complete(false), pan_failback(true) {}
 
   inline ViewArgs::operator cuvis_viewer_settings_t() const
   {
     cuvis_viewer_settings_t args;
     args.userplugin = userplugin.c_str();
-    args.pan_scale = pan_scale;
-    args.pan_interpolation_type = pan_interpolation_type;
-    args.pan_algorithm = pan_algorithm;
-    args.pre_pan_sharpen_cube = pre_pan_sharpen_cube;
     args.complete = complete;
-    args.blend_opacity = blend_opacity;
     args.pan_failback = pan_failback ? 1 : 0;
+    std::strncpy(args.pansharpening_settings.channel_selection, pansharpening_settings.channel_selection.c_str(), CUVIS_MAXBUF);
+    args.pansharpening_settings.spectra_multiplier = pansharpening_settings.spectra_multiplier;
+    args.pansharpening_settings.pan_scale = pansharpening_settings.pan_scale;
+    args.pansharpening_settings.pan_interpolation_type = pansharpening_settings.pan_interpolation_type;
+    args.pansharpening_settings.pan_algorithm = pansharpening_settings.pan_algorithm;
+    args.pansharpening_settings.pre_pan_sharpen_cube = pansharpening_settings.pre_pan_sharpen_cube ? 1 : 0;
+    args.pansharpening_settings.add_pan = pansharpening_settings.add_pan ? 1 : 0;
 
     return args;
   }
@@ -2973,8 +3025,9 @@ namespace cuvis
   {
     cuvis_export_view_settings_t args;
     args.userplugin = userplugin.c_str();
+    args.complete = complete ? 1 : 0;
     args.pan_failback = pan_failback ? 1 : 0;
-
+    
     return args;
   }
 
