@@ -108,6 +108,9 @@ namespace cuvis
 
   /** @copydoc cuvis_session_merge_mode_t */
   using session_merge_mode_t = cuvis_session_merge_mode_t;
+  
+    /** @copydoc cuvis_session_merge_mode_t */
+  using session_item_type_t = cuvis_session_item_type_t;
 
   /** @} */
 
@@ -1052,7 +1055,7 @@ namespace cuvis
   public:
     SessionFile(std::filesystem::path const& path);
 
-    std::optional<Measurement> get_mesu(int_t frameNo, cuvis_session_item_type_t type = cuvis_session_item_type_t::session_item_type_frames) const;
+    std::optional<Measurement> get_mesu(int_t frameNo, session_item_type_t type = session_item_type_t::session_item_type_frames) const;
 
     std::optional<Measurement> get_ref(int_t refNo, cuvis_reference_type_t type) const;
 
@@ -1061,7 +1064,7 @@ namespace cuvis
     /**
      * @brief get size of the SessionFile
      */
-    int_t get_size(cuvis_session_item_type_t type = cuvis_session_item_type_t::session_item_type_frames) const;
+    int_t get_size(session_item_type_t type = session_item_type_t::session_item_type_frames) const;
 
     /**
      * @brief get the frame rate of this session
@@ -2830,7 +2833,7 @@ namespace cuvis
     });
   }
 
-  inline std::optional<Measurement> SessionFile::get_mesu(int_t frameNo, cuvis_session_item_type_t type) const
+  inline std::optional<Measurement> SessionFile::get_mesu(int_t frameNo, session_item_type_t type) const
   {
     CUVIS_MESU mesu;
     cuvis_session_file_get_mesu(*_session, frameNo, type, &mesu);
@@ -2875,7 +2878,7 @@ namespace cuvis
     return image;
   }
 
-  inline int_t SessionFile::get_size(cuvis_session_item_type_t type) const
+  inline int_t SessionFile::get_size(session_item_type_t type) const
   {
     int_t size;
     chk(cuvis_session_file_get_size(*_session, type, &size));
