@@ -109,7 +109,7 @@ namespace cuvis
   /** @copydoc cuvis_session_merge_mode_t */
   using session_merge_mode_t = cuvis_session_merge_mode_t;
   
-    /** @copydoc cuvis_session_merge_mode_t */
+    /** @copydoc cuvis_session_item_type_t */
   using session_item_type_t = cuvis_session_item_type_t;
 
   /** @} */
