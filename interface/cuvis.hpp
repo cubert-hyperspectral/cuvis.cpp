@@ -27,6 +27,7 @@
 #include <thread>
 #include <type_traits>
 #include <variant>
+#include <vector>
 
 namespace cuvis
 {
@@ -108,8 +109,8 @@ namespace cuvis
 
   /** @copydoc cuvis_session_merge_mode_t */
   using session_merge_mode_t = cuvis_session_merge_mode_t;
-  
-    /** @copydoc cuvis_session_item_type_t */
+
+  /** @copydoc cuvis_session_item_type_t */
   using session_item_type_t = cuvis_session_item_type_t;
 
   /** @} */
@@ -177,7 +178,8 @@ namespace cuvis
   template <typename data_t>
   struct common_image_t
   {
-    static_assert(is_supported_image_data_t<data_t>::value, "data_t must be std::uint8_t, std::uint16_t, std::uint32_t or float");
+    static_assert(
+        is_supported_image_data_t<data_t>::value, "data_t must be std::uint8_t, std::uint16_t, std::uint32_t or float");
 
     /** width of channel(X - dimension) */
     std::size_t _width;
@@ -302,9 +304,9 @@ namespace cuvis
      * */
     pan_sharpening_algorithm_t pan_algorithm;
 
-    /** 
-      * @copydoc cuvis_viewer_settings_t.pre_pan_sharpen_cube
-      */
+    /**
+     * @copydoc cuvis_viewer_settings_t.pre_pan_sharpen_cube
+     */
     bool pre_pan_sharpen_cube;
 
     /** @brief Add the pan image to the output (default: @ref false)
@@ -476,9 +478,9 @@ namespace cuvis
      */
     std::string userplugin;
 
-    /** 
-      * @copydoc cuvis_viewer_settings_t.complete
-      */
+    /**
+     * @copydoc cuvis_viewer_settings_t.complete
+     */
     bool complete;
 
     /**
@@ -580,17 +582,8 @@ namespace cuvis
    */
   struct CalibrationInfo
   {
-    /** Constructor to create default parameters */
-    CalibrationInfo();
-
     /** Constructor to create session info from session*/
     CalibrationInfo(calibration_info_t const& calib);
-
-    /** @brief convert to C - SDK settings structure
-     *
-     * @copydoc cuvis_session_info_t
-     */
-    operator calibration_info_t() const;
 
     /**
      * @copydoc cuvis_calibration_info_t.name
@@ -640,7 +633,7 @@ namespace cuvis
     /**
      * @copydoc cuvis_calibration_info_t.cube_wavelengths
      */
-    uint32_t const* cube_wavelengths;
+    std::vector<uint32_t> const cube_wavelengths;
   };
 
   /**
@@ -782,7 +775,8 @@ namespace cuvis
     /**
      * @copydoc cuvis_register_log_callback_localized
      */
-    static void register_log_callback_localized(std::function<void(wchar_t const*, loglevel_t)> callback, int_t min_lvl, std::string const& loc_id);
+    static void register_log_callback_localized(
+        std::function<void(wchar_t const*, loglevel_t)> callback, int_t min_lvl, std::string const& loc_id);
     /**
      * @copydoc cuvis_reset_log_callback_localized
      */
@@ -824,7 +818,8 @@ namespace cuvis
     friend class Worker;
 
   public:
-    using image_variant_t = std::variant<image_t<std::uint8_t>, image_t<std::uint16_t>, image_t<std::uint32_t>, image_t<float>>;
+    using image_variant_t =
+        std::variant<image_t<std::uint8_t>, image_t<std::uint16_t>, image_t<std::uint32_t>, image_t<float>>;
 
     using gps_data_t = std::map<std::string, cuvis_gps_t>;
     using string_data_t = std::map<std::string, std::string>;
@@ -1055,7 +1050,8 @@ namespace cuvis
   public:
     SessionFile(std::filesystem::path const& path);
 
-    std::optional<Measurement> get_mesu(int_t frameNo, session_item_type_t type = session_item_type_t::session_item_type_frames) const;
+    std::optional<Measurement>
+        get_mesu(int_t frameNo, session_item_type_t type = session_item_type_t::session_item_type_frames) const;
 
     std::optional<Measurement> get_ref(int_t refNo, cuvis_reference_type_t type) const;
 
@@ -1217,7 +1213,8 @@ namespace cuvis
     friend class AcquisitionContext;
 
   public:
-    std::pair<async_result_t, std::optional<Measurement>> get(std::chrono::milliseconds waittime = std::chrono::milliseconds(0));
+    std::pair<async_result_t, std::optional<Measurement>>
+        get(std::chrono::milliseconds waittime = std::chrono::milliseconds(0));
 
   private:
     std::shared_ptr<CUVIS_ASYNC_CAPTURE_RESULT> _async;
@@ -1251,7 +1248,8 @@ namespace cuvis
     std::string get_component_pixel_format(int id) const;
     Async set_component_pixel_format(int id, std::string format);
     std::vector<std::string> get_component_available_pixel_formats(int_t id) const;
-    std::optional<Measurement> get_next_measurement(std::chrono::milliseconds timeout_ms = std::chrono::milliseconds(0)) const;
+    std::optional<Measurement>
+        get_next_measurement(std::chrono::milliseconds timeout_ms = std::chrono::milliseconds(0)) const;
     SessionInfo get_session_info() const;
     int_t get_component_count() const;
     CUVIS_COMPONENT_INFO get_component_info(int_t id) const;
@@ -1266,7 +1264,7 @@ namespace cuvis
     void reset_state_change_callback();
 
     bool get_dead_pixel_correction_available() const;
-    
+
     bool get_dead_pixel_correction_enabled() const;
 
     void set_dead_pixel_correction_enabled(bool enable);
@@ -1278,17 +1276,18 @@ namespace cuvis
     chk(sdkname##_get(*_acqCont, &res));                        \
     return static_cast<type_wrapped>(res);                      \
   }
-#define ACQ_STUB_0b(funname, sdkname, type_ifcae, type_wrapped)                                                                              \
-  Async set_##funname(type_wrapped value) const                                                                                              \
-  {                                                                                                                                          \
-    CUVIS_ASYNC_CALL_RESULT async_handle;                                                                                                    \
-    chk(sdkname##_set_async(*_acqCont, &async_handle, static_cast<type_ifcae>(value)));                                                      \
-    Async async;                                                                                                                             \
-    async._async = std::shared_ptr<CUVIS_ASYNC_CALL_RESULT>(new CUVIS_ASYNC_CALL_RESULT{async_handle}, [](CUVIS_ASYNC_CALL_RESULT* handle) { \
-      cuvis_async_call_free(handle);                                                                                                         \
-      delete handle;                                                                                                                         \
-    });                                                                                                                                      \
-    return async;                                                                                                                            \
+#define ACQ_STUB_0b(funname, sdkname, type_ifcae, type_wrapped)                          \
+  Async set_##funname(type_wrapped value) const                                          \
+  {                                                                                      \
+    CUVIS_ASYNC_CALL_RESULT async_handle;                                                \
+    chk(sdkname##_set_async(*_acqCont, &async_handle, static_cast<type_ifcae>(value)));  \
+    Async async;                                                                         \
+    async._async = std::shared_ptr<CUVIS_ASYNC_CALL_RESULT>(                             \
+        new CUVIS_ASYNC_CALL_RESULT{async_handle}, [](CUVIS_ASYNC_CALL_RESULT* handle) { \
+          cuvis_async_call_free(handle);                                                 \
+          delete handle;                                                                 \
+        });                                                                              \
+    return async;                                                                        \
   }
 
     ACQ_STUB_0a(fps, cuvis_acq_cont_fps, double, double);
@@ -1340,17 +1339,18 @@ namespace cuvis
 
 #undef ACQ_STUB_1a
 
-#define ACQ_STUB_1b(funname, sdkname, type_ifcae, type_wrapped)                                                                              \
-  Async set_##funname(size_t id, type_wrapped value) const                                                                                   \
-  {                                                                                                                                          \
-    CUVIS_ASYNC_CALL_RESULT async_handle;                                                                                                    \
-    chk(sdkname##_set_async(*_acqCont, static_cast<int32_t>(id), &async_handle, static_cast<type_ifcae>(value)));                            \
-    Async async;                                                                                                                             \
-    async._async = std::shared_ptr<CUVIS_ASYNC_CALL_RESULT>(new CUVIS_ASYNC_CALL_RESULT{async_handle}, [](CUVIS_ASYNC_CALL_RESULT* handle) { \
-      cuvis_async_call_free(handle);                                                                                                         \
-      delete handle;                                                                                                                         \
-    });                                                                                                                                      \
-    return async;                                                                                                                            \
+#define ACQ_STUB_1b(funname, sdkname, type_ifcae, type_wrapped)                                                   \
+  Async set_##funname(size_t id, type_wrapped value) const                                                        \
+  {                                                                                                               \
+    CUVIS_ASYNC_CALL_RESULT async_handle;                                                                         \
+    chk(sdkname##_set_async(*_acqCont, static_cast<int32_t>(id), &async_handle, static_cast<type_ifcae>(value))); \
+    Async async;                                                                                                  \
+    async._async = std::shared_ptr<CUVIS_ASYNC_CALL_RESULT>(                                                      \
+        new CUVIS_ASYNC_CALL_RESULT{async_handle}, [](CUVIS_ASYNC_CALL_RESULT* handle) {                          \
+          cuvis_async_call_free(handle);                                                                          \
+          delete handle;                                                                                          \
+        });                                                                                                       \
+    return async;                                                                                                 \
   }
 
     ACQ_STUB_1b(component_gain, cuvis_comp_gain, double, double);
@@ -1525,7 +1525,8 @@ namespace cuvis
 
     worker_state_t get_state() const;
 
-    void register_worker_callback(worker_callback_t callback, unsigned concurrency = 1, size_t measurement_timeout_ms = 1000);
+    void register_worker_callback(
+        worker_callback_t callback, unsigned concurrency = 1, size_t measurement_timeout_ms = 1000);
 
     void reset_worker_callback();
 
@@ -1846,7 +1847,10 @@ namespace cuvis
 
   inline MeasurementMetaData const* Measurement::get_meta() const { return _meta.get(); }
 
-  inline cuvis::Measurement::sensor_info_data_t const* Measurement::get_sensor_info() const { return _sensor_info.get(); }
+  inline cuvis::Measurement::sensor_info_data_t const* Measurement::get_sensor_info() const
+  {
+    return _sensor_info.get();
+  }
 
   inline Calibration::Calibration(std::filesystem::path const& path)
   {
@@ -1909,7 +1913,7 @@ namespace cuvis
   inline ProcessingContext::ProcessingContext(SessionFile const& session, bool load_references)
   {
     CUVIS_PROC_CONT procCont;
-    chk(cuvis_proc_cont_create_from_session_file(*session._session,load_references ? 1 : 0, &procCont));
+    chk(cuvis_proc_cont_create_from_session_file(*session._session, load_references ? 1 : 0, &procCont));
     _procCont = std::shared_ptr<CUVIS_PROC_CONT>(new CUVIS_PROC_CONT{procCont}, [](CUVIS_PROC_CONT* handle) {
       cuvis_proc_cont_free(handle);
       delete handle;
@@ -2162,7 +2166,10 @@ namespace cuvis
     return {std::move(mesu), view, except};
   }
 
-  inline void Worker::ingest_measurement(Measurement const& measurement) { chk(cuvis_worker_ingest_mesu(*_worker, *measurement._mesu)); }
+  inline void Worker::ingest_measurement(Measurement const& measurement)
+  {
+    chk(cuvis_worker_ingest_mesu(*_worker, *measurement._mesu));
+  }
 
   inline void Worker::start_processing() { chk(cuvis_worker_start(*_worker)); }
 
@@ -2208,7 +2215,8 @@ namespace cuvis
     return out;
   }
 
-  inline void Worker::register_worker_callback(worker_callback_t callback, unsigned concurrency, size_t measurement_timeout_ms)
+  inline void
+      Worker::register_worker_callback(worker_callback_t callback, unsigned concurrency, size_t measurement_timeout_ms)
   {
     reset_worker_callback();
 
@@ -2471,14 +2479,15 @@ namespace cuvis
     }
   }
 
-  
-  inline bool AcquisitionContext::get_dead_pixel_correction_available() const { 
+  inline bool AcquisitionContext::get_dead_pixel_correction_available() const
+  {
     CUVIS_INT available;
     chk(cuvis_acq_cont_dead_pixel_correction_available_get(*_acqCont, &available));
     return available != 0;
   }
 
-  inline bool AcquisitionContext::get_dead_pixel_correction_enabled() const {
+  inline bool AcquisitionContext::get_dead_pixel_correction_enabled() const
+  {
     CUVIS_INT enabled;
     chk(cuvis_acq_cont_dead_pixel_correction_enabled_get(*_acqCont, &enabled));
     return enabled != 0;
@@ -2574,10 +2583,11 @@ namespace cuvis
     CUVIS_ASYNC_CAPTURE_RESULT asyncRes;
     chk(cuvis_acq_cont_capture_async(*_acqCont, &asyncRes));
     AsyncMesu am;
-    am._async = std::shared_ptr<CUVIS_ASYNC_CAPTURE_RESULT>(new CUVIS_ASYNC_CAPTURE_RESULT{asyncRes}, [](CUVIS_ASYNC_CAPTURE_RESULT* handle) {
-      cuvis_async_capture_free(handle);
-      delete handle;
-    });
+    am._async = std::shared_ptr<CUVIS_ASYNC_CAPTURE_RESULT>(
+        new CUVIS_ASYNC_CAPTURE_RESULT{asyncRes}, [](CUVIS_ASYNC_CAPTURE_RESULT* handle) {
+          cuvis_async_capture_free(handle);
+          delete handle;
+        });
     return am;
   }
 
@@ -2600,10 +2610,11 @@ namespace cuvis
     CUVIS_ASYNC_CALL_RESULT async_handle;
     chk(cuvis_comp_pixel_format_set_async(*_acqCont, &async_handle, id, format.c_str()));
     Async async;
-    async._async = std::shared_ptr<CUVIS_ASYNC_CALL_RESULT>(new CUVIS_ASYNC_CALL_RESULT{async_handle}, [](CUVIS_ASYNC_CALL_RESULT* handle) {
-      cuvis_async_call_free(handle);
-      delete handle;
-    });
+    async._async = std::shared_ptr<CUVIS_ASYNC_CALL_RESULT>(
+        new CUVIS_ASYNC_CALL_RESULT{async_handle}, [](CUVIS_ASYNC_CALL_RESULT* handle) {
+          cuvis_async_call_free(handle);
+          delete handle;
+        });
     return async;
   }
 
@@ -2772,7 +2783,10 @@ namespace cuvis
     inline void SDK_CCALL custom_log(char const* msg, loglevel_t lvl) { log_callback_fun(msg, lvl); }
     inline std::mutex log_callback_localized_fun_mutex;
     inline std::function<void(wchar_t const*, loglevel_t)> log_callback_localized_fun;
-    inline void SDK_CCALL custom_log_localized(wchar_t const* msg, loglevel_t lvl) { log_callback_localized_fun(msg, lvl); }
+    inline void SDK_CCALL custom_log_localized(wchar_t const* msg, loglevel_t lvl)
+    {
+      log_callback_localized_fun(msg, lvl);
+    }
   } // namespace log_impl
 
   inline void General::register_log_callback(std::function<void(char const*, loglevel_t)> callback, int_t min_lvl)
@@ -2792,11 +2806,13 @@ namespace cuvis
     return;
   }
 
-  inline void General::register_log_callback_localized(std::function<void(wchar_t const*, loglevel_t)> callback, int_t min_lvl, std::string const& loc_id = "")
+  inline void General::register_log_callback_localized(
+      std::function<void(wchar_t const*, loglevel_t)> callback, int_t min_lvl, std::string const& loc_id = "")
   {
     const std::lock_guard<std::mutex> lock(log_impl::log_callback_localized_fun_mutex);
     log_impl::log_callback_localized_fun = callback;
-    chk(cuvis_register_log_callback_localized((log_callback_localized)log_impl::custom_log_localized, min_lvl, loc_id.c_str()));
+    chk(cuvis_register_log_callback_localized(
+        (log_callback_localized)log_impl::custom_log_localized, min_lvl, loc_id.c_str()));
     return;
   }
 
@@ -2935,13 +2951,15 @@ namespace cuvis
         pre_pan_sharpen_cube(true)
   {}
 
-  inline GeneralExportArgs::GeneralExportArgs() : export_dir("."), add_fullscale_pan(false), permissive(false), pansharpening_settings({})
+  inline GeneralExportArgs::GeneralExportArgs()
+      : export_dir("."), add_fullscale_pan(false), permissive(false), pansharpening_settings({})
   {}
 
   inline GeneralExportArgs::operator cuvis_export_general_settings_t() const
   {
     cuvis_export_general_settings_t ges({});
-    std::strncpy(ges.pansharpening_settings.channel_selection, pansharpening_settings.channel_selection.c_str(), CUVIS_MAXBUF);
+    std::strncpy(
+        ges.pansharpening_settings.channel_selection, pansharpening_settings.channel_selection.c_str(), CUVIS_MAXBUF);
     ges.pansharpening_settings.spectra_multiplier = pansharpening_settings.spectra_multiplier;
     ges.pansharpening_settings.pan_scale = pansharpening_settings.pan_scale;
     ges.pansharpening_settings.pan_interpolation_type = pansharpening_settings.pan_interpolation_type;
@@ -3014,7 +3032,8 @@ namespace cuvis
     args.userplugin = userplugin.c_str();
     args.complete = complete;
     args.pan_failback = pan_failback ? 1 : 0;
-    std::strncpy(args.pansharpening_settings.channel_selection, pansharpening_settings.channel_selection.c_str(), CUVIS_MAXBUF);
+    std::strncpy(
+        args.pansharpening_settings.channel_selection, pansharpening_settings.channel_selection.c_str(), CUVIS_MAXBUF);
     args.pansharpening_settings.spectra_multiplier = pansharpening_settings.spectra_multiplier;
     args.pansharpening_settings.pan_scale = pansharpening_settings.pan_scale;
     args.pansharpening_settings.pan_interpolation_type = pansharpening_settings.pan_interpolation_type;
@@ -3030,7 +3049,7 @@ namespace cuvis
     args.userplugin = userplugin.c_str();
     args.complete = complete ? 1 : 0;
     args.pan_failback = pan_failback ? 1 : 0;
-    
+
     return args;
   }
 
@@ -3070,7 +3089,9 @@ namespace cuvis
 
   inline SessionInfo::SessionInfo() : name("auto"), session_no(0), sequence_no(0) {}
 
-  inline SessionInfo::SessionInfo(session_info_t const& sess) : name(sess.name), session_no(sess.session_no), sequence_no(sess.sequence_no) {}
+  inline SessionInfo::SessionInfo(session_info_t const& sess)
+      : name(sess.name), session_no(sess.session_no), sequence_no(sess.sequence_no)
+  {}
 
   inline SessionInfo::operator cuvis::session_info_t() const
   {
@@ -3081,30 +3102,19 @@ namespace cuvis
     return sess;
   }
 
-  inline CalibrationInfo::CalibrationInfo()
-      : model_name("null"), serial_no("null"), calibration_date(), annotation_name("null"), unique_id("null"), file_path("null")
-  {}
-
   inline CalibrationInfo::CalibrationInfo(calibration_info_t const& calib)
       : model_name(calib.model_name),
         serial_no(calib.serial_no),
-        calibration_date(std::chrono::time_point<std::chrono::system_clock>(std::chrono::milliseconds(calib.calibration_date))),
+        calibration_date(
+            std::chrono::time_point<std::chrono::system_clock>(std::chrono::milliseconds(calib.calibration_date))),
         annotation_name(calib.annotation_name),
         unique_id(calib.unique_id),
-        file_path(calib.file_path)
+        file_path(calib.file_path),
+        cube_width(calib.cube_width),
+        cube_height(calib.cube_height),
+        cube_channels(calib.cube_channels),
+        cube_wavelengths(calib.cube_wavelengths, calib.cube_wavelengths + calib.cube_channels)
   {}
-
-  inline CalibrationInfo::operator cuvis::calibration_info_t() const
-  {
-    calibration_info_t calib;
-    std::strncpy(calib.model_name, model_name.c_str(), CUVIS_MAXBUF);
-    std::strncpy(calib.serial_no, serial_no.c_str(), CUVIS_MAXBUF);
-    calib.calibration_date = std::chrono::time_point_cast<std::chrono::milliseconds>(calibration_date).time_since_epoch().count();
-    std::strncpy(calib.annotation_name, annotation_name.c_str(), CUVIS_MAXBUF);
-    std::strncpy(calib.unique_id, unique_id.c_str(), CUVIS_MAXBUF);
-    std::strncpy(calib.file_path, file_path.c_str(), CUVIS_MAXBUF);
-    return calib;
-  }
 
   inline MeasurementMetaData::MeasurementMetaData(mesu_metadata_t const& meta)
   {
@@ -3112,7 +3122,8 @@ namespace cuvis
     path = std::string(meta.path);
     comment = std::string(meta.comment);
     capture_time = std::chrono::time_point<std::chrono::system_clock>(std::chrono::milliseconds(meta.capture_time));
-    factory_calibration = std::chrono::time_point<std::chrono::system_clock>(std::chrono::milliseconds(meta.factory_calibration));
+    factory_calibration =
+        std::chrono::time_point<std::chrono::system_clock>(std::chrono::milliseconds(meta.factory_calibration));
     product_name = std::string(meta.product_name);
     serial_number = std::string(meta.serial_number);
     assembly = std::string(meta.assembly);
@@ -3149,7 +3160,9 @@ namespace cuvis
     integration_time = info.integration_time;
   }
 
-  inline cuvis_sdk_exception::cuvis_sdk_exception(std::string const& msg, std::wstring const& wmsg) : _msg(msg), _wmsg(wmsg) {}
+  inline cuvis_sdk_exception::cuvis_sdk_exception(std::string const& msg, std::wstring const& wmsg)
+      : _msg(msg), _wmsg(wmsg)
+  {}
 
   inline char const* cuvis_sdk_exception::what(void) const noexcept { return _msg.c_str(); }
 
