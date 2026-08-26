@@ -804,6 +804,122 @@ namespace cuvis
     static void unregister_event_callback(int_t i_handler_id);
   };
 
+#ifdef CUVIS_CPP_HAS_CUDA_IPC
+  /** @copydoc cuvis_cuda_imbuffer_t */
+  using cuda_imbuffer_t = cuvis_cuda_imbuffer_t;
+
+  /** @copydoc cuvis_cuda_mem_view_t */
+  using cuda_mem_view_t = cuvis_cuda_mem_view_t;
+
+  /** @copydoc cuvis_cuda_ipc_descriptor_t */
+  using cuda_ipc_descriptor_t = cuvis_cuda_ipc_descriptor_t;
+
+  // The descriptor is a wire format shared with non-C++ consumers that hard-code these
+  // offsets. A size change means the layout moved and every consumer must be revisited.
+  static_assert(sizeof(cuda_ipc_descriptor_t) == 184, "cuvis_cuda_ipc_descriptor_t layout changed");
+
+  /** @brief IPC transport backing a device buffer export. See CUVIS_CUDA_IPC_BACKEND_. */
+  enum class cuda_ipc_backend_t : int
+  {
+    automatic = CUVIS_CUDA_IPC_BACKEND_AUTO,
+    pool = CUVIS_CUDA_IPC_BACKEND_POOL,
+    legacy = CUVIS_CUDA_IPC_BACKEND_LEGACY,
+    vmm = CUVIS_CUDA_IPC_BACKEND_VMM
+  };
+
+  /** @brief Kind of OS handle carried in a descriptor's blob. See CUVIS_CUDA_IPC_HANDLE_. */
+  enum class cuda_ipc_handle_type_t : int
+  {
+    none = CUVIS_CUDA_IPC_HANDLE_NONE,
+    win32 = CUVIS_CUDA_IPC_HANDLE_WIN32,
+    win32_kmt = CUVIS_CUDA_IPC_HANDLE_WIN32_KMT,
+    posix_fd = CUVIS_CUDA_IPC_HANDLE_POSIX_FD
+  };
+
+  /**
+   * @copydoc cuvis_cuda_ipc_backend_available
+   */
+  bool cuda_ipc_backend_available(cuda_ipc_backend_t backend);
+
+  /** @brief A live cross-process export of a device buffer.
+   *
+   * Holds the descriptor a consumer needs to map the buffer. There is no cross-process
+   * refcount: the consumer's mapping stays valid only while this object is alive.
+   */
+  class CudaIpcExport
+  {
+    friend class CudaImage;
+
+  public:
+    cuda_ipc_backend_t backend() const { return static_cast<cuda_ipc_backend_t>(_descriptor.backend); }
+
+    cuda_ipc_handle_type_t handle_type() const
+    {
+      return static_cast<cuda_ipc_handle_type_t>(_descriptor.handle_type);
+    }
+
+    cuda_ipc_descriptor_t const& descriptor() const { return _descriptor; }
+
+  private:
+    CudaIpcExport(std::shared_ptr<CUVIS_CUDA_MEM> mem, cuda_ipc_backend_t backend);
+
+    // _mem is declared first so it is destroyed last: the SDK requires the export
+    // registration to be released before the memory it refers to.
+    std::shared_ptr<CUVIS_CUDA_MEM> _mem;
+    std::shared_ptr<CUVIS_CUDA_IPC> _ipc;
+    cuda_ipc_descriptor_t _descriptor;
+  };
+
+  /** @brief Image data from a measurement that stays resident in CUDA device memory.
+   *
+   * Obtained from @ref Measurement::cuda_image. Mirrors @ref image_t, except the host
+   * pointer is replaced by a device buffer reachable through @ref view (same process)
+   * or @ref make_ipc (another process).
+   */
+  class CudaImage
+  {
+    friend class Measurement;
+
+  public:
+    std::size_t width() const { return _width; }
+    std::size_t height() const { return _height; }
+    std::size_t channels() const { return _channels; }
+
+    /** bytes per element */
+    std::size_t bytes_per_element() const { return _bytes; }
+
+    /** total bytes of the device buffer */
+    std::size_t size_in_bytes() const { return _length; }
+
+    cuvis_imbuffer_format_t format() const { return _format; }
+
+    /** wavelength vector, nullptr or an array of @ref channels entries in nano meter */
+    std::uint32_t const* wavelength() const { return _wavelength; }
+
+    /**
+     * @copydoc cuvis_cuda_mem_get_view
+     */
+    cuda_mem_view_t view() const;
+
+    /**
+     * @copydoc cuvis_cuda_ipc_handle_create
+     */
+    CudaIpcExport make_ipc(cuda_ipc_backend_t backend) const;
+
+  private:
+    explicit CudaImage(cuda_imbuffer_t const& buffer);
+
+    std::shared_ptr<CUVIS_CUDA_MEM> _mem;
+    std::size_t _width;
+    std::size_t _height;
+    std::size_t _channels;
+    std::size_t _bytes;
+    std::size_t _length;
+    cuvis_imbuffer_format_t _format;
+    std::uint32_t const* _wavelength;
+  };
+#endif
+
   /** @brief central measurement class
    */
   class Measurement
@@ -871,6 +987,19 @@ namespace cuvis
      * Return image data from measurement.
      */
     image_data_t const* get_imdata() const { return _image_data.get(); }
+
+#ifdef CUVIS_CPP_HAS_CUDA_IPC
+    /** @brief Get image data from the measurement without moving it off the CUDA device
+     *
+     * Deliberately not part of the eagerly populated @ref get_imdata map: acquiring a
+     * device buffer is an explicit, per-key request. The host and device copies coexist,
+     * so calling this after the host fetch is fine.
+     *
+     * Requires the SDK to be running in GPU mode (force_gpu_mode="cuda" in cuvis.settings);
+     * otherwise the cube is not device-backed and this throws.
+     */
+    CudaImage cuda_image(std::string const& key) const;
+#endif
 
     /** @brief Get string data from measurement
      */
@@ -1618,6 +1747,64 @@ namespace cuvis
       throw cuvis_sdk_exception(cuvis_get_last_error_msg(), cuvis_get_last_error_msg_localized());
     }
   }
+
+#ifdef CUVIS_CPP_HAS_CUDA_IPC
+  inline bool cuda_ipc_backend_available(cuda_ipc_backend_t backend)
+  {
+    int available = 0;
+    chk(cuvis_cuda_ipc_backend_available(static_cast<int>(backend), &available));
+    return available != 0;
+  }
+
+  inline CudaIpcExport::CudaIpcExport(std::shared_ptr<CUVIS_CUDA_MEM> mem, cuda_ipc_backend_t backend)
+      : _mem(std::move(mem)), _descriptor{}
+  {
+    CUVIS_CUDA_IPC ipc;
+    chk(cuvis_cuda_ipc_handle_create(*_mem, static_cast<int>(backend), &ipc));
+
+    _ipc = std::shared_ptr<CUVIS_CUDA_IPC>(new CUVIS_CUDA_IPC{ipc}, [](CUVIS_CUDA_IPC* handle) {
+      cuvis_cuda_ipc_handle_free(*handle);
+      delete handle;
+    });
+
+    chk(cuvis_cuda_ipc_get_descriptor(*_ipc, &_descriptor));
+  }
+
+  inline CudaImage::CudaImage(cuda_imbuffer_t const& buffer)
+      : _mem(std::shared_ptr<CUVIS_CUDA_MEM>(
+            new CUVIS_CUDA_MEM{buffer.handle},
+            [](CUVIS_CUDA_MEM* handle) {
+              cuvis_cuda_mem_free(*handle);
+              delete handle;
+            })),
+        _width(buffer.width),
+        _height(buffer.height),
+        _channels(buffer.channels),
+        _bytes(buffer.bytes),
+        _length(buffer.length),
+        _format(buffer.format),
+        _wavelength(buffer.wavelength)
+  {}
+
+  inline cuda_mem_view_t CudaImage::view() const
+  {
+    cuda_mem_view_t view{};
+    chk(cuvis_cuda_mem_get_view(*_mem, &view));
+    return view;
+  }
+
+  inline CudaIpcExport CudaImage::make_ipc(cuda_ipc_backend_t backend) const
+  {
+    return CudaIpcExport(_mem, backend);
+  }
+
+  inline CudaImage Measurement::cuda_image(std::string const& key) const
+  {
+    cuda_imbuffer_t buffer{};
+    chk(cuvis_measurement_get_data_image_cuda(*_mesu, key.c_str(), &buffer));
+    return CudaImage(buffer);
+  }
+#endif
 
   inline Measurement::Measurement(Measurement const& source)
       : _gps_data(std::make_shared<gps_data_t>()),
