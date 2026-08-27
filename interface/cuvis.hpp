@@ -1093,6 +1093,18 @@ namespace cuvis
     std::shared_ptr<CUVIS_SESSION_FILE> _session;
   };
 
+  /**
+   * @brief An averaged white spectrum, usable in place of a white reference measurement
+   *
+   * Wavelengths are nanometres; values are raw sensor counts. Both vectors carry one
+   * entry per sample and must be equally long.
+   */
+  struct white_spectrum_t
+  {
+    std::vector<float> wavelengths;
+    std::vector<std::uint16_t> counts;
+  };
+
   class ProcessingContext
   {
     friend class Worker;
@@ -1118,6 +1130,22 @@ namespace cuvis
     void set_reference(Measurement const& mesu, reference_type_t type);
 
     /**
+     * @brief Set an averaged white spectrum as the white reference
+     *
+     * Fills the @ref Reference_WhiteSpectrum slot, which replaces a white reference
+     * measurement in the reflectance calculation. Setting the spectrum clears a
+     * previously set white measurement, and setting a white measurement clears the
+     * spectrum.
+     *
+     * @param spectrum wavelengths [nm] and raw counts, equally long and non-empty
+     * @param effective_bit_depth bit depth the counts are interpreted against (1 to 16)
+     * @param integration_time integration time the counts were recorded with [ms]
+     * @param load_level load level the counts were recorded with
+     */
+    void set_reference_white_spectrum(
+        white_spectrum_t const& spectrum, std::uint16_t effective_bit_depth, double integration_time = 0.0, double load_level = 0.0);
+
+    /**
      * @brief Clear a reference measurement
      *
      * @param type Type of reference to clear
@@ -1139,6 +1167,15 @@ namespace cuvis
      * by this functions
      */
     std::optional<Measurement> get_reference(reference_type_t type) const;
+
+    /**
+     * @brief get the white reference spectrum, if one is set
+     *
+     * The recording metadata passed to @ref set_reference_white_spectrum
+     * (bit depth, integration time, load level) is not returned; the C interface
+     * does not expose it.
+     */
+    std::optional<white_spectrum_t> get_reference_white_spectrum() const;
 
     /**
      * @brief get the arguments of the processing context
@@ -1959,6 +1996,41 @@ namespace cuvis
     Measurement mesu(handle);
 
     return {mesu};
+  }
+
+  inline void ProcessingContext::set_reference_white_spectrum(
+      white_spectrum_t const& spectrum, std::uint16_t effective_bit_depth, double integration_time, double load_level)
+  {
+    if (spectrum.wavelengths.size() != spectrum.counts.size())
+    {
+      throw std::invalid_argument("white spectrum needs equally many wavelengths and counts");
+    }
+    chk(cuvis_proc_cont_set_reference_white_spectrum(
+        *_procCont,
+        spectrum.wavelengths.data(),
+        spectrum.counts.data(),
+        static_cast<std::uint32_t>(spectrum.wavelengths.size()),
+        effective_bit_depth,
+        integration_time,
+        load_level));
+  }
+
+  inline std::optional<white_spectrum_t> ProcessingContext::get_reference_white_spectrum() const
+  {
+    if (!has_reference(Reference_WhiteSpectrum))
+    {
+      return {};
+    }
+
+    std::uint32_t count = 0;
+    chk(cuvis_proc_cont_get_reference_spectrum_size(*_procCont, Reference_WhiteSpectrum, &count));
+
+    white_spectrum_t spectrum;
+    spectrum.wavelengths.resize(count);
+    spectrum.counts.resize(count);
+    chk(cuvis_proc_cont_get_reference_white_spectrum(*_procCont, spectrum.wavelengths.data(), spectrum.counts.data(), count));
+
+    return {spectrum};
   }
 
   inline bool ProcessingContext::calc_distance(double distMM)
