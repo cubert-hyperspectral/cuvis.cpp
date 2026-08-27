@@ -3185,7 +3185,14 @@ namespace cuvis
         cube_width(calib.cube_width),
         cube_height(calib.cube_height),
         cube_channels(calib.cube_channels),
-        cube_wavelengths(calib.cube_wavelengths, calib.cube_wavelengths + calib.cube_channels)
+        // The SDK reports no wavelength vector (nullptr) for calibrations that carry none,
+        // or whose vector does not match the channel count; channels can also be -1 when
+        // the calibration has no cube size. Both would make the iterator-pair ctor read
+        // through a null pointer.
+        cube_wavelengths(
+            (calib.cube_wavelengths != nullptr && calib.cube_channels > 0)
+                ? std::vector<uint32_t>(calib.cube_wavelengths, calib.cube_wavelengths + calib.cube_channels)
+                : std::vector<uint32_t>())
   {}
 
   inline MeasurementMetaData::MeasurementMetaData(mesu_metadata_t const& meta)
