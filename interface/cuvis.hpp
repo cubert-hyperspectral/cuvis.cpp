@@ -2442,13 +2442,15 @@ namespace cuvis
   inline int_t Calibration::get_component_count() const
   {
     int_t count;
-    chk(cuvis_acq_cont_get_component_count(*_calib, &count));
+    // Was cuvis_acq_cont_get_component_count: a calibration handle in the acquisition
+    // vault is an invalid-handle error, so this could never have worked.
+    chk(cuvis_calib_get_component_count(*_calib, &count));
     return count;
   }
   inline CUVIS_COMPONENT_INFO Calibration::get_component_info(int_t id) const
   {
     CUVIS_COMPONENT_INFO info;
-    chk(cuvis_acq_cont_get_component_info(*_calib, id, &info));
+    chk(cuvis_calib_get_component_info(*_calib, id, &info));
     return info;
   }
 
