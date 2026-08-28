@@ -1661,9 +1661,7 @@ namespace cuvis
           cuvis_measurement_free(handle);
           delete handle;
         }))
-  {
-    refresh();
-  }
+  { refresh(); }
 
   inline void Measurement::save(SaveArgs const& args)
   {
@@ -1917,9 +1915,7 @@ namespace cuvis
   inline MeasurementMetaData const* Measurement::get_meta() const { return _meta.get(); }
 
   inline cuvis::Measurement::sensor_info_data_t const* Measurement::get_sensor_info() const
-  {
-    return _sensor_info.get();
-  }
+  { return _sensor_info.get(); }
 
   inline Calibration::Calibration(std::filesystem::path const& path)
   {
@@ -2160,9 +2156,7 @@ namespace cuvis
   }
 
   inline void Worker::ingest_session_file(SessionFile const& session, std::string frame_selection)
-  {
-    chk(cuvis_worker_ingest_session_file(*_worker, *session._session, frame_selection.c_str()));
-  }
+  { chk(cuvis_worker_ingest_session_file(*_worker, *session._session, frame_selection.c_str())); }
 
   inline double Worker::query_session_progress()
   {
@@ -2299,9 +2293,7 @@ namespace cuvis
   }
 
   inline void Worker::ingest_measurement(Measurement const& measurement)
-  {
-    chk(cuvis_worker_ingest_mesu(*_worker, *measurement._mesu));
-  }
+  { chk(cuvis_worker_ingest_mesu(*_worker, *measurement._mesu)); }
 
   inline void Worker::start_processing() { chk(cuvis_worker_start(*_worker)); }
 
@@ -2502,8 +2494,6 @@ namespace cuvis
   inline int_t Calibration::get_component_count() const
   {
     int_t count;
-    // Was cuvis_acq_cont_get_component_count: a calibration handle in the acquisition
-    // vault is an invalid-handle error, so this could never have worked.
     chk(cuvis_calib_get_component_count(*_calib, &count));
     return count;
   }
@@ -2530,7 +2520,6 @@ namespace cuvis
   {
     CUVIS_ACQ_CONT acqCont;
     chk(cuvis_acq_cont_create_from_session_file(*sess._session, simulate, &acqCont));
-    // chk(cuvis_proc_cont_create_from_session_file(*sess._session, &acqCont));
     _acqCont = std::shared_ptr<CUVIS_ACQ_CONT>(new CUVIS_ACQ_CONT{acqCont}, [](CUVIS_ACQ_CONT* handle) {
       cuvis_acq_cont_free(handle);
       delete handle;
@@ -2902,13 +2891,9 @@ namespace cuvis
     };
   } // namespace event_impl
   inline int_t General::register_event_callback(cpp_event_callback_t callback, int_t i_type)
-  {
-    return event_impl::event_handler_register::get_handler_register().register_event_callback(callback, i_type);
-  }
+  { return event_impl::event_handler_register::get_handler_register().register_event_callback(callback, i_type); }
   inline void General::unregister_event_callback(int_t i_handler_id)
-  {
-    event_impl::event_handler_register::get_handler_register().unregister_event_callback(i_handler_id);
-  }
+  { event_impl::event_handler_register::get_handler_register().unregister_event_callback(i_handler_id); }
 
   namespace log_impl
   {
@@ -2918,9 +2903,7 @@ namespace cuvis
     inline std::mutex log_callback_localized_fun_mutex;
     inline std::function<void(wchar_t const*, loglevel_t)> log_callback_localized_fun;
     inline void SDK_CCALL custom_log_localized(wchar_t const* msg, loglevel_t lvl)
-    {
-      log_callback_localized_fun(msg, lvl);
-    }
+    { log_callback_localized_fun(msg, lvl); }
   } // namespace log_impl
 
   inline void General::register_log_callback(std::function<void(char const*, loglevel_t)> callback, int_t min_lvl)
