@@ -1105,6 +1105,18 @@ namespace cuvis
     std::vector<std::uint16_t> counts;
   };
 
+  /**
+   * @brief The reflectivity curve of the white target used for reflectance calculation
+   *
+   * Wavelengths are nanometres; values are reflectivity as a fraction, 1.0 meaning
+   * 100 percent. Both vectors carry one entry per sample and must be equally long.
+   */
+  struct target_spectrum_t
+  {
+    std::vector<float> wavelengths;
+    std::vector<float> values;
+  };
+
   class ProcessingContext
   {
     friend class Worker;
@@ -1140,10 +1152,20 @@ namespace cuvis
      * @param spectrum wavelengths [nm] and raw counts, equally long and non-empty
      * @param effective_bit_depth bit depth the counts are interpreted against (1 to 16)
      * @param integration_time integration time the counts were recorded with [ms]
-     * @param load_level load level the counts were recorded with
      */
     void set_reference_white_spectrum(
-        white_spectrum_t const& spectrum, std::uint16_t effective_bit_depth, double integration_time = 0.0, double load_level = 0.0);
+        white_spectrum_t const& spectrum, std::uint16_t effective_bit_depth, double integration_time = 0.0);
+
+    /**
+     * @brief Set the reflectivity curve of the white target
+     *
+     * Fills the @ref Reference_TargetSpectrum slot. When no target spectrum is set, a
+     * perfectly white target (reflectivity 1.0 everywhere) is assumed.
+     *
+     * @param spectrum wavelengths [nm] and reflectivity fractions (1.0 = 100 percent),
+     *        equally long and non-empty
+     */
+    void set_reference_target_spectrum(target_spectrum_t const& spectrum);
 
     /**
      * @brief Clear a reference measurement
@@ -1176,6 +1198,11 @@ namespace cuvis
      * does not expose it.
      */
     std::optional<white_spectrum_t> get_reference_white_spectrum() const;
+
+    /**
+     * @brief get the target reflectivity spectrum, if one is set
+     */
+    std::optional<target_spectrum_t> get_reference_target_spectrum() const;
 
     /**
      * @brief get the arguments of the processing context
@@ -1999,7 +2026,7 @@ namespace cuvis
   }
 
   inline void ProcessingContext::set_reference_white_spectrum(
-      white_spectrum_t const& spectrum, std::uint16_t effective_bit_depth, double integration_time, double load_level)
+      white_spectrum_t const& spectrum, std::uint16_t effective_bit_depth, double integration_time)
   {
     if (spectrum.wavelengths.size() != spectrum.counts.size())
     {
@@ -2011,8 +2038,20 @@ namespace cuvis
         spectrum.counts.data(),
         static_cast<std::uint32_t>(spectrum.wavelengths.size()),
         effective_bit_depth,
-        integration_time,
-        load_level));
+        integration_time));
+  }
+
+  inline void ProcessingContext::set_reference_target_spectrum(target_spectrum_t const& spectrum)
+  {
+    if (spectrum.wavelengths.size() != spectrum.values.size())
+    {
+      throw std::invalid_argument("target spectrum needs equally many wavelengths and values");
+    }
+    chk(cuvis_proc_cont_set_reference_target_spectrum(
+        *_procCont,
+        spectrum.wavelengths.data(),
+        spectrum.values.data(),
+        static_cast<std::uint32_t>(spectrum.wavelengths.size())));
   }
 
   inline std::optional<white_spectrum_t> ProcessingContext::get_reference_white_spectrum() const
@@ -2029,6 +2068,24 @@ namespace cuvis
     spectrum.wavelengths.resize(count);
     spectrum.counts.resize(count);
     chk(cuvis_proc_cont_get_reference_white_spectrum(*_procCont, spectrum.wavelengths.data(), spectrum.counts.data(), count));
+
+    return {spectrum};
+  }
+
+  inline std::optional<target_spectrum_t> ProcessingContext::get_reference_target_spectrum() const
+  {
+    if (!has_reference(Reference_TargetSpectrum))
+    {
+      return {};
+    }
+
+    std::uint32_t count = 0;
+    chk(cuvis_proc_cont_get_reference_spectrum_size(*_procCont, Reference_TargetSpectrum, &count));
+
+    target_spectrum_t spectrum;
+    spectrum.wavelengths.resize(count);
+    spectrum.values.resize(count);
+    chk(cuvis_proc_cont_get_reference_target_spectrum(*_procCont, spectrum.wavelengths.data(), spectrum.values.data(), count));
 
     return {spectrum};
   }
