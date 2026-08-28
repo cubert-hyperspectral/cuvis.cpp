@@ -1094,15 +1094,23 @@ namespace cuvis
   };
 
   /**
-   * @brief An averaged white spectrum, usable in place of a white reference measurement
+   * @brief An averaged spectrum of raw sensor counts, usable in place of a white
+   * reference measurement
    *
-   * Wavelengths are nanometres; values are raw sensor counts. Both vectors carry one
-   * entry per sample and must be equally long.
+   * The owning analogue of the C interface's @ref cuvis_sensor_spectrum_t: one struct
+   * carries the samples and the acquisition context that makes counts interpretable.
+   * Wavelengths are nanometres. Both vectors carry one entry per sample and must be
+   * equally long.
    */
-  struct white_spectrum_t
+  struct sensor_spectrum_t
   {
     std::vector<float> wavelengths;
-    std::vector<std::uint16_t> counts;
+    /** raw sensor counts */
+    std::vector<std::uint16_t> values;
+    /** bit depth the counts are interpreted against (1 to 16) */
+    std::uint16_t effective_bit_depth = 0;
+    /** integration time the counts were recorded with [ms] */
+    double integration_time = 0.0;
   };
 
   /**
@@ -1142,19 +1150,17 @@ namespace cuvis
     void set_reference(Measurement const& mesu, reference_type_t type);
 
     /**
-     * @brief Set an averaged white spectrum as the white reference
+     * @brief Set an averaged sensor spectrum as the white reference
      *
      * Fills the @ref Reference_WhiteSpectrum slot, which replaces a white reference
      * measurement in the reflectance calculation. Setting the spectrum clears a
      * previously set white measurement, and setting a white measurement clears the
      * spectrum.
      *
-     * @param spectrum wavelengths [nm] and raw counts, equally long and non-empty
-     * @param effective_bit_depth bit depth the counts are interpreted against (1 to 16)
-     * @param integration_time integration time the counts were recorded with [ms]
+     * @param spectrum wavelengths [nm], raw counts (equally long and non-empty),
+     *        effective bit depth (1 to 16) and integration time [ms]
      */
-    void set_reference_white_spectrum(
-        white_spectrum_t const& spectrum, std::uint16_t effective_bit_depth, double integration_time = 0.0);
+    void set_reference_white_spectrum(sensor_spectrum_t const& spectrum);
 
     /**
      * @brief Set the reflectivity curve of the white target
@@ -1193,11 +1199,10 @@ namespace cuvis
     /**
      * @brief get the white reference spectrum, if one is set
      *
-     * The recording metadata passed to @ref set_reference_white_spectrum
-     * (bit depth, integration time, load level) is not returned; the C interface
-     * does not expose it.
+     * Returns an owning copy, including the effective bit depth and integration time
+     * the spectrum was set with.
      */
-    std::optional<white_spectrum_t> get_reference_white_spectrum() const;
+    std::optional<sensor_spectrum_t> get_reference_white_spectrum() const;
 
     /**
      * @brief get the target reflectivity spectrum, if one is set
@@ -2025,20 +2030,19 @@ namespace cuvis
     return {mesu};
   }
 
-  inline void ProcessingContext::set_reference_white_spectrum(
-      white_spectrum_t const& spectrum, std::uint16_t effective_bit_depth, double integration_time)
+  inline void ProcessingContext::set_reference_white_spectrum(sensor_spectrum_t const& spectrum)
   {
-    if (spectrum.wavelengths.size() != spectrum.counts.size())
+    if (spectrum.wavelengths.size() != spectrum.values.size())
     {
       throw std::invalid_argument("white spectrum needs equally many wavelengths and counts");
     }
-    chk(cuvis_proc_cont_set_reference_white_spectrum(
-        *_procCont,
+    CUVIS_SENSOR_SPECTRUM c_spectrum{
         spectrum.wavelengths.data(),
-        spectrum.counts.data(),
+        spectrum.values.data(),
         static_cast<std::uint32_t>(spectrum.wavelengths.size()),
-        effective_bit_depth,
-        integration_time));
+        spectrum.effective_bit_depth,
+        spectrum.integration_time};
+    chk(cuvis_proc_cont_set_reference_white_spectrum(*_procCont, &c_spectrum));
   }
 
   inline void ProcessingContext::set_reference_target_spectrum(target_spectrum_t const& spectrum)
@@ -2047,27 +2051,27 @@ namespace cuvis
     {
       throw std::invalid_argument("target spectrum needs equally many wavelengths and values");
     }
-    chk(cuvis_proc_cont_set_reference_target_spectrum(
-        *_procCont,
-        spectrum.wavelengths.data(),
-        spectrum.values.data(),
-        static_cast<std::uint32_t>(spectrum.wavelengths.size())));
+    CUVIS_TARGET_SPECTRUM c_spectrum{
+        spectrum.wavelengths.data(), spectrum.values.data(), static_cast<std::uint32_t>(spectrum.wavelengths.size())};
+    chk(cuvis_proc_cont_set_reference_target_spectrum(*_procCont, &c_spectrum));
   }
 
-  inline std::optional<white_spectrum_t> ProcessingContext::get_reference_white_spectrum() const
+  inline std::optional<sensor_spectrum_t> ProcessingContext::get_reference_white_spectrum() const
   {
     if (!has_reference(Reference_WhiteSpectrum))
     {
       return {};
     }
 
-    std::uint32_t count = 0;
-    chk(cuvis_proc_cont_get_reference_spectrum_size(*_procCont, Reference_WhiteSpectrum, &count));
+    // the C getter borrows SDK memory; copy into owning vectors right away
+    CUVIS_SENSOR_SPECTRUM c_spectrum{};
+    chk(cuvis_proc_cont_get_reference_white_spectrum(*_procCont, &c_spectrum));
 
-    white_spectrum_t spectrum;
-    spectrum.wavelengths.resize(count);
-    spectrum.counts.resize(count);
-    chk(cuvis_proc_cont_get_reference_white_spectrum(*_procCont, spectrum.wavelengths.data(), spectrum.counts.data(), count));
+    sensor_spectrum_t spectrum;
+    spectrum.wavelengths.assign(c_spectrum.wavelengths, c_spectrum.wavelengths + c_spectrum.count);
+    spectrum.values.assign(c_spectrum.values, c_spectrum.values + c_spectrum.count);
+    spectrum.effective_bit_depth = c_spectrum.effective_bit_depth;
+    spectrum.integration_time = c_spectrum.integration_time;
 
     return {spectrum};
   }
@@ -2079,13 +2083,12 @@ namespace cuvis
       return {};
     }
 
-    std::uint32_t count = 0;
-    chk(cuvis_proc_cont_get_reference_spectrum_size(*_procCont, Reference_TargetSpectrum, &count));
+    CUVIS_TARGET_SPECTRUM c_spectrum{};
+    chk(cuvis_proc_cont_get_reference_target_spectrum(*_procCont, &c_spectrum));
 
     target_spectrum_t spectrum;
-    spectrum.wavelengths.resize(count);
-    spectrum.values.resize(count);
-    chk(cuvis_proc_cont_get_reference_target_spectrum(*_procCont, spectrum.wavelengths.data(), spectrum.values.data(), count));
+    spectrum.wavelengths.assign(c_spectrum.wavelengths, c_spectrum.wavelengths + c_spectrum.count);
+    spectrum.values.assign(c_spectrum.values, c_spectrum.values + c_spectrum.count);
 
     return {spectrum};
   }
