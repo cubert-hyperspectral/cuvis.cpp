@@ -63,22 +63,3 @@ FixNamespaceComments: true
 IncludeBlocks: Regroup
 IndentPPDirectives: BeforeHash
 
-IncludeCategories:
-  - Regex: '"'
-    Priority: 1
-  - Regex: '^<cubert/common'
-    Priority: 2
-  - Regex: '^<cubert/extern'
-    Priority: 3
-  - Regex: '^<Q'
-    Priority: 4
-  - Regex: '^<pilot'
-    Priority: 50
-  - Regex: '^<utils'
-    Priority: 51
-  - Regex: '^<custom'
-    Priority: 52
-  - Regex: '^<wrapper'
-    Priority: 53
-  - Regex: '.*'
-    Priority: 100
