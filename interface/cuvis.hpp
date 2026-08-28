@@ -1093,6 +1093,38 @@ namespace cuvis
     std::shared_ptr<CUVIS_SESSION_FILE> _session;
   };
 
+  /**
+   * @brief An averaged spectrum of raw sensor counts, usable in place of a white
+   * reference measurement
+   *
+   * The owning analogue of the C interface's @ref cuvis_sensor_spectrum_t: one struct
+   * carries the samples and the acquisition context that makes counts interpretable.
+   * Wavelengths are nanometres. Both vectors carry one entry per sample and must be
+   * equally long.
+   */
+  struct sensor_spectrum_t
+  {
+    std::vector<float> wavelengths;
+    /** raw sensor counts */
+    std::vector<std::uint16_t> values;
+    /** bit depth the counts are interpreted against (1 to 16) */
+    std::uint16_t effective_bit_depth = 0;
+    /** integration time the counts were recorded with [ms] */
+    double integration_time = 0.0;
+  };
+
+  /**
+   * @brief The reflectivity curve of the white target used for reflectance calculation
+   *
+   * Wavelengths are nanometres; values are reflectivity as a fraction, 1.0 meaning
+   * 100 percent. Both vectors carry one entry per sample and must be equally long.
+   */
+  struct target_spectrum_t
+  {
+    std::vector<float> wavelengths;
+    std::vector<float> values;
+  };
+
   class ProcessingContext
   {
     friend class Worker;
@@ -1118,6 +1150,30 @@ namespace cuvis
     void set_reference(Measurement const& mesu, reference_type_t type);
 
     /**
+     * @brief Set an averaged sensor spectrum as the white reference
+     *
+     * Fills the @ref Reference_WhiteSpectrum slot, which replaces a white reference
+     * measurement in the reflectance calculation. Setting the spectrum clears a
+     * previously set white measurement, and setting a white measurement clears the
+     * spectrum.
+     *
+     * @param spectrum wavelengths [nm], raw counts (equally long and non-empty),
+     *        effective bit depth (1 to 16) and integration time [ms]
+     */
+    void set_reference_white_spectrum(sensor_spectrum_t const& spectrum);
+
+    /**
+     * @brief Set the reflectivity curve of the white target
+     *
+     * Fills the @ref Reference_TargetSpectrum slot. When no target spectrum is set, a
+     * perfectly white target (reflectivity 1.0 everywhere) is assumed.
+     *
+     * @param spectrum wavelengths [nm] and reflectivity fractions (1.0 = 100 percent),
+     *        equally long and non-empty
+     */
+    void set_reference_target_spectrum(target_spectrum_t const& spectrum);
+
+    /**
      * @brief Clear a reference measurement
      *
      * @param type Type of reference to clear
@@ -1139,6 +1195,19 @@ namespace cuvis
      * by this functions
      */
     std::optional<Measurement> get_reference(reference_type_t type) const;
+
+    /**
+     * @brief get the white reference spectrum, if one is set
+     *
+     * Returns an owning copy, including the effective bit depth and integration time
+     * the spectrum was set with.
+     */
+    std::optional<sensor_spectrum_t> get_reference_white_spectrum() const;
+
+    /**
+     * @brief get the target reflectivity spectrum, if one is set
+     */
+    std::optional<target_spectrum_t> get_reference_target_spectrum() const;
 
     /**
      * @brief get the arguments of the processing context
@@ -1592,9 +1661,7 @@ namespace cuvis
           cuvis_measurement_free(handle);
           delete handle;
         }))
-  {
-    refresh();
-  }
+  { refresh(); }
 
   inline void Measurement::save(SaveArgs const& args)
   {
@@ -1848,9 +1915,7 @@ namespace cuvis
   inline MeasurementMetaData const* Measurement::get_meta() const { return _meta.get(); }
 
   inline cuvis::Measurement::sensor_info_data_t const* Measurement::get_sensor_info() const
-  {
-    return _sensor_info.get();
-  }
+  { return _sensor_info.get(); }
 
   inline Calibration::Calibration(std::filesystem::path const& path)
   {
@@ -1961,6 +2026,69 @@ namespace cuvis
     return {mesu};
   }
 
+  inline void ProcessingContext::set_reference_white_spectrum(sensor_spectrum_t const& spectrum)
+  {
+    if (spectrum.wavelengths.size() != spectrum.values.size())
+    {
+      throw std::invalid_argument("white spectrum needs equally many wavelengths and counts");
+    }
+    CUVIS_SENSOR_SPECTRUM c_spectrum{
+        spectrum.wavelengths.data(),
+        spectrum.values.data(),
+        static_cast<std::uint32_t>(spectrum.wavelengths.size()),
+        spectrum.effective_bit_depth,
+        spectrum.integration_time};
+    chk(cuvis_proc_cont_set_reference_white_spectrum(*_procCont, &c_spectrum));
+  }
+
+  inline void ProcessingContext::set_reference_target_spectrum(target_spectrum_t const& spectrum)
+  {
+    if (spectrum.wavelengths.size() != spectrum.values.size())
+    {
+      throw std::invalid_argument("target spectrum needs equally many wavelengths and values");
+    }
+    CUVIS_TARGET_SPECTRUM c_spectrum{
+        spectrum.wavelengths.data(), spectrum.values.data(), static_cast<std::uint32_t>(spectrum.wavelengths.size())};
+    chk(cuvis_proc_cont_set_reference_target_spectrum(*_procCont, &c_spectrum));
+  }
+
+  inline std::optional<sensor_spectrum_t> ProcessingContext::get_reference_white_spectrum() const
+  {
+    if (!has_reference(Reference_WhiteSpectrum))
+    {
+      return {};
+    }
+
+    // the C getter borrows SDK memory; copy into owning vectors right away
+    CUVIS_SENSOR_SPECTRUM c_spectrum{};
+    chk(cuvis_proc_cont_get_reference_white_spectrum(*_procCont, &c_spectrum));
+
+    sensor_spectrum_t spectrum;
+    spectrum.wavelengths.assign(c_spectrum.wavelengths, c_spectrum.wavelengths + c_spectrum.count);
+    spectrum.values.assign(c_spectrum.values, c_spectrum.values + c_spectrum.count);
+    spectrum.effective_bit_depth = c_spectrum.effective_bit_depth;
+    spectrum.integration_time = c_spectrum.integration_time;
+
+    return {spectrum};
+  }
+
+  inline std::optional<target_spectrum_t> ProcessingContext::get_reference_target_spectrum() const
+  {
+    if (!has_reference(Reference_TargetSpectrum))
+    {
+      return {};
+    }
+
+    CUVIS_TARGET_SPECTRUM c_spectrum{};
+    chk(cuvis_proc_cont_get_reference_target_spectrum(*_procCont, &c_spectrum));
+
+    target_spectrum_t spectrum;
+    spectrum.wavelengths.assign(c_spectrum.wavelengths, c_spectrum.wavelengths + c_spectrum.count);
+    spectrum.values.assign(c_spectrum.values, c_spectrum.values + c_spectrum.count);
+
+    return {spectrum};
+  }
+
   inline bool ProcessingContext::calc_distance(double distMM)
   {
     chk(cuvis_proc_cont_calc_distance(*_procCont, distMM));
@@ -2028,9 +2156,7 @@ namespace cuvis
   }
 
   inline void Worker::ingest_session_file(SessionFile const& session, std::string frame_selection)
-  {
-    chk(cuvis_worker_ingest_session_file(*_worker, *session._session, frame_selection.c_str()));
-  }
+  { chk(cuvis_worker_ingest_session_file(*_worker, *session._session, frame_selection.c_str())); }
 
   inline double Worker::query_session_progress()
   {
@@ -2167,9 +2293,7 @@ namespace cuvis
   }
 
   inline void Worker::ingest_measurement(Measurement const& measurement)
-  {
-    chk(cuvis_worker_ingest_mesu(*_worker, *measurement._mesu));
-  }
+  { chk(cuvis_worker_ingest_mesu(*_worker, *measurement._mesu)); }
 
   inline void Worker::start_processing() { chk(cuvis_worker_start(*_worker)); }
 
@@ -2370,13 +2494,13 @@ namespace cuvis
   inline int_t Calibration::get_component_count() const
   {
     int_t count;
-    chk(cuvis_acq_cont_get_component_count(*_calib, &count));
+    chk(cuvis_calib_get_component_count(*_calib, &count));
     return count;
   }
   inline CUVIS_COMPONENT_INFO Calibration::get_component_info(int_t id) const
   {
     CUVIS_COMPONENT_INFO info;
-    chk(cuvis_acq_cont_get_component_info(*_calib, id, &info));
+    chk(cuvis_calib_get_component_info(*_calib, id, &info));
     return info;
   }
 
@@ -2396,7 +2520,6 @@ namespace cuvis
   {
     CUVIS_ACQ_CONT acqCont;
     chk(cuvis_acq_cont_create_from_session_file(*sess._session, simulate, &acqCont));
-    // chk(cuvis_proc_cont_create_from_session_file(*sess._session, &acqCont));
     _acqCont = std::shared_ptr<CUVIS_ACQ_CONT>(new CUVIS_ACQ_CONT{acqCont}, [](CUVIS_ACQ_CONT* handle) {
       cuvis_acq_cont_free(handle);
       delete handle;
@@ -2768,13 +2891,9 @@ namespace cuvis
     };
   } // namespace event_impl
   inline int_t General::register_event_callback(cpp_event_callback_t callback, int_t i_type)
-  {
-    return event_impl::event_handler_register::get_handler_register().register_event_callback(callback, i_type);
-  }
+  { return event_impl::event_handler_register::get_handler_register().register_event_callback(callback, i_type); }
   inline void General::unregister_event_callback(int_t i_handler_id)
-  {
-    event_impl::event_handler_register::get_handler_register().unregister_event_callback(i_handler_id);
-  }
+  { event_impl::event_handler_register::get_handler_register().unregister_event_callback(i_handler_id); }
 
   namespace log_impl
   {
@@ -2784,9 +2903,7 @@ namespace cuvis
     inline std::mutex log_callback_localized_fun_mutex;
     inline std::function<void(wchar_t const*, loglevel_t)> log_callback_localized_fun;
     inline void SDK_CCALL custom_log_localized(wchar_t const* msg, loglevel_t lvl)
-    {
-      log_callback_localized_fun(msg, lvl);
-    }
+    { log_callback_localized_fun(msg, lvl); }
   } // namespace log_impl
 
   inline void General::register_log_callback(std::function<void(char const*, loglevel_t)> callback, int_t min_lvl)
@@ -3113,7 +3230,14 @@ namespace cuvis
         cube_width(calib.cube_width),
         cube_height(calib.cube_height),
         cube_channels(calib.cube_channels),
-        cube_wavelengths(calib.cube_wavelengths, calib.cube_wavelengths + calib.cube_channels)
+        // The SDK reports no wavelength vector (nullptr) for calibrations that carry none,
+        // or whose vector does not match the channel count; channels can also be -1 when
+        // the calibration has no cube size. Both would make the iterator-pair ctor read
+        // through a null pointer.
+        cube_wavelengths(
+            (calib.cube_wavelengths != nullptr && calib.cube_channels > 0)
+                ? std::vector<uint32_t>(calib.cube_wavelengths, calib.cube_wavelengths + calib.cube_channels)
+                : std::vector<uint32_t>())
   {}
 
   inline MeasurementMetaData::MeasurementMetaData(mesu_metadata_t const& meta)
