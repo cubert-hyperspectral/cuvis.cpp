@@ -809,10 +809,12 @@ namespace cuvis
   /** @addtogroup cuda CUDA device memory
    *
    * The CUDA entry points are looked up in the loaded cuvis library at first use instead
-   * of being imported at link time, so this wrapper builds and runs against an SDK that
-   * predates them. Two questions are kept apart because they fail for different reasons:
-   * @ref cuda_supported asks whether the library provides the functions, @ref
-   * cuda_ipc_backend_available asks whether this device and driver support a transport.
+   * of being imported at link time, so an older library is a degraded run rather than a
+   * dead process. The declarations still come from cuvis.h, so the header must have the
+   * CUDA block even when the library turns out not to export it. Two questions are kept
+   * apart because they fail for different reasons: @ref cuda_supported asks whether the
+   * library provides the functions, @ref cuda_ipc_backend_available asks whether this
+   * device and driver support a transport.
    *
    * Nothing here needs the CUDA toolkit. The device pointer is handed out as an opaque
    * address for a consumer to wrap.
@@ -825,54 +827,14 @@ namespace cuvis
   /** @brief handle to an active ipc export registration */
   using cuda_ipc_t = CUVIS_HANDLE;
 
-  enum
-  {
-    cuda_ipc_blob_max = 64,
-    cuda_ipc_ptr_blob_max = 64
-  };
+  /** @brief Raw device pointer, size and device index. */
+  using cuda_mem_view_t = cuvis_cuda_mem_view_t;
 
-  /** @brief Raw device pointer, size and device index. Mirrors cuvis_cuda_mem_view_t. */
-  struct cuda_mem_view_t
-  {
-    void const* device_ptr;
-    std::uint64_t size;
-    std::int32_t device_ordinal;
-  };
+  /** @brief Image buffer described by a device handle. */
+  using cuda_imbuffer_t = cuvis_cuda_imbuffer_t;
 
-  /** @brief Image buffer described by a device handle. Mirrors cuvis_cuda_imbuffer_t. */
-  struct cuda_imbuffer_t
-  {
-    cuda_mem_t handle;
-    std::uint32_t bytes;
-    std::uint32_t length;
-    std::uint32_t width;
-    std::uint32_t height;
-    std::uint16_t channels;
-    cuvis_imbuffer_format_t format;
-    std::uint32_t const* wavelength;
-  };
-
-  /** @brief Everything a consumer needs to map an exported buffer.
-   *
-   * Declared here rather than aliased from cuvis.h so this wrapper compiles against an
-   * SDK whose header predates the CUDA API. The asserts below check the copy against the
-   * real struct on any machine whose header does declare it.
-   */
-  struct cuda_ipc_descriptor_t
-  {
-    std::int32_t backend;
-    std::int32_t device_ordinal;
-    std::int32_t handle_type;
-    std::uint32_t blob_len;
-    std::uint64_t size;
-    std::uint64_t alloc_size;
-    std::uint64_t offset;
-    std::uint64_t exporter_pid;
-    std::uint8_t blob[cuda_ipc_blob_max];
-    std::uint32_t ptr_blob_len;
-    std::uint32_t _pad;
-    std::uint8_t ptr_blob[cuda_ipc_ptr_blob_max];
-  };
+  /** @brief Everything a consumer needs to map an exported buffer. */
+  using cuda_ipc_descriptor_t = cuvis_cuda_ipc_descriptor_t;
 
   // The descriptor is a wire format shared with non-C++ consumers that hard-code these
   // offsets. A size change means the layout moved and every consumer must be revisited.
@@ -881,50 +843,26 @@ namespace cuvis
   static_assert(offsetof(cuda_ipc_descriptor_t, ptr_blob_len) == 112);
   static_assert(offsetof(cuda_ipc_descriptor_t, ptr_blob) == 120);
 
-#ifdef CUVIS_CUDA_IPC_DESCRIPTOR
-  #define CUVIS_CPP_SAME_OFFSET(field) \
-    static_assert(offsetof(cuda_ipc_descriptor_t, field) == offsetof(cuvis_cuda_ipc_descriptor_t, field))
+  // cuvis.h declares these as unnamed enums, so they cannot be aliased the way the
+  // structs above are. Scoping them is what stops a backend being passed where a handle
+  // type is expected; the values still come from cuvis.h.
 
-  static_assert(sizeof(cuda_ipc_descriptor_t) == sizeof(cuvis_cuda_ipc_descriptor_t));
-  CUVIS_CPP_SAME_OFFSET(backend);
-  CUVIS_CPP_SAME_OFFSET(device_ordinal);
-  CUVIS_CPP_SAME_OFFSET(handle_type);
-  CUVIS_CPP_SAME_OFFSET(blob_len);
-  CUVIS_CPP_SAME_OFFSET(size);
-  CUVIS_CPP_SAME_OFFSET(alloc_size);
-  CUVIS_CPP_SAME_OFFSET(offset);
-  CUVIS_CPP_SAME_OFFSET(exporter_pid);
-  CUVIS_CPP_SAME_OFFSET(blob);
-  CUVIS_CPP_SAME_OFFSET(ptr_blob_len);
-  CUVIS_CPP_SAME_OFFSET(ptr_blob);
-  #undef CUVIS_CPP_SAME_OFFSET
-
-  static_assert(sizeof(cuda_mem_view_t) == sizeof(cuvis_cuda_mem_view_t));
-  static_assert(offsetof(cuda_mem_view_t, size) == offsetof(cuvis_cuda_mem_view_t, size));
-  static_assert(
-      offsetof(cuda_mem_view_t, device_ordinal) == offsetof(cuvis_cuda_mem_view_t, device_ordinal));
-
-  static_assert(sizeof(cuda_imbuffer_t) == sizeof(cuvis_cuda_imbuffer_t));
-  static_assert(offsetof(cuda_imbuffer_t, channels) == offsetof(cuvis_cuda_imbuffer_t, channels));
-  static_assert(offsetof(cuda_imbuffer_t, wavelength) == offsetof(cuvis_cuda_imbuffer_t, wavelength));
-#endif
-
-  /** @brief IPC transport backing a device buffer export. See CUVIS_CUDA_IPC_BACKEND_. */
+  /** @brief IPC transport backing a device buffer export. */
   enum class cuda_ipc_backend_t : int
   {
-    automatic = 0,
-    pool = 1,
-    legacy = 2,
-    vmm = 3
+    automatic = CUVIS_CUDA_IPC_BACKEND_AUTO,
+    pool = CUVIS_CUDA_IPC_BACKEND_POOL,
+    legacy = CUVIS_CUDA_IPC_BACKEND_LEGACY,
+    vmm = CUVIS_CUDA_IPC_BACKEND_VMM
   };
 
-  /** @brief Kind of OS handle carried in a descriptor's blob. See CUVIS_CUDA_IPC_HANDLE_. */
+  /** @brief Kind of OS handle carried in a descriptor's blob. */
   enum class cuda_ipc_handle_type_t : int
   {
-    none = 0,
-    win32 = 1,
-    win32_kmt = 2,
-    posix_fd = 3
+    none = CUVIS_CUDA_IPC_HANDLE_NONE,
+    win32 = CUVIS_CUDA_IPC_HANDLE_WIN32,
+    win32_kmt = CUVIS_CUDA_IPC_HANDLE_WIN32_KMT,
+    posix_fd = CUVIS_CUDA_IPC_HANDLE_POSIX_FD
   };
 
   /** @brief The loaded cuvis library does not provide a CUDA function that was called. */

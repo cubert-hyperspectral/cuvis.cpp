@@ -5,10 +5,10 @@ find_library(
     NAMES "cuvis"
     HINTS "/lib/cuvis" "$ENV{PROGRAMFILES}/Cuvis/bin")
 
-# bin is searched first because it is the only copy of cuvis.h that declares the CUDA
-# API. It is a pure superset of sdk/cuvis_c, and nothing requires it: the CUDA wrapper
-# carries its own declarations and only cross-checks them against this header when it
-# happens to have them.
+# The wrapper aliases the SDK's CUDA structs, so the header it compiles against has to
+# declare them. SDK 3.6.0 ships that block in sdk/cuvis_c; older drops carried it only in
+# bin/cuvis.h, a pure superset. bin is searched first so the copy that has it wins on
+# either layout - find_path cannot discriminate on content.
 find_path(CuvisCpp_INCLUDE_DIR
   NAMES cuvis.h
   HINTS "/usr/include/" "$ENV{PROGRAMFILES}/Cuvis/bin" "$ENV{PROGRAMFILES}/Cuvis/sdk/cuvis_c")
