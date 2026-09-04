@@ -13,6 +13,7 @@
 #include <atomic>
 #include <cassert>
 #include <chrono>
+#include <cstddef>
 #include <cstring>
 #include <deque>
 #include <exception>
@@ -23,6 +24,7 @@
 #include <memory>
 #include <mutex>
 #include <optional>
+#include <stdexcept>
 #include <string>
 #include <thread>
 #include <type_traits>
@@ -804,6 +806,219 @@ namespace cuvis
     static void unregister_event_callback(int_t i_handler_id);
   };
 
+  /** @addtogroup cuda CUDA device memory
+   *
+   * The CUDA entry points are looked up in the loaded cuvis library at first use instead
+   * of being imported at link time, so an older library is a degraded run rather than a
+   * dead process. The declarations still come from cuvis.h, so the header must have the
+   * CUDA block even when the library turns out not to export it. Two questions are kept
+   * apart because they fail for different reasons: @ref cuda_supported asks whether the
+   * library provides the functions, @ref cuda_ipc_backend_available asks whether this
+   * device and driver support a transport.
+   *
+   * Nothing here needs the CUDA toolkit. The device pointer is handed out as an opaque
+   * address for a consumer to wrap.
+   *  @{
+   */
+
+  /** @brief handle to a shareable CUDA device buffer */
+  using cuda_mem_t = CUVIS_HANDLE;
+
+  /** @brief handle to an active ipc export registration */
+  using cuda_ipc_t = CUVIS_HANDLE;
+
+  /** @brief Raw device pointer, size and device index. */
+  using cuda_mem_view_t = cuvis_cuda_mem_view_t;
+
+  /** @brief Image buffer described by a device handle. */
+  using cuda_imbuffer_t = cuvis_cuda_imbuffer_t;
+
+  /** @brief Everything a consumer needs to map an exported buffer. */
+  using cuda_ipc_descriptor_t = cuvis_cuda_ipc_descriptor_t;
+
+  // The descriptor is a wire format shared with non-C++ consumers that hard-code these
+  // offsets. A size change means the layout moved and every consumer must be revisited.
+  static_assert(sizeof(cuda_ipc_descriptor_t) == 184, "cuda_ipc_descriptor_t layout changed");
+  static_assert(offsetof(cuda_ipc_descriptor_t, blob) == 48);
+  static_assert(offsetof(cuda_ipc_descriptor_t, ptr_blob_len) == 112);
+  static_assert(offsetof(cuda_ipc_descriptor_t, ptr_blob) == 120);
+
+  // cuvis.h declares these as unnamed enums, so they cannot be aliased the way the
+  // structs above are. Scoping them is what stops a backend being passed where a handle
+  // type is expected; the values still come from cuvis.h.
+
+  /** @brief IPC transport backing a device buffer export. */
+  enum class cuda_ipc_backend_t : int
+  {
+    automatic = CUVIS_CUDA_IPC_BACKEND_AUTO,
+    pool = CUVIS_CUDA_IPC_BACKEND_POOL,
+    legacy = CUVIS_CUDA_IPC_BACKEND_LEGACY,
+    vmm = CUVIS_CUDA_IPC_BACKEND_VMM
+  };
+
+  /** @brief Kind of OS handle carried in a descriptor's blob. */
+  enum class cuda_ipc_handle_type_t : int
+  {
+    none = CUVIS_CUDA_IPC_HANDLE_NONE,
+    win32 = CUVIS_CUDA_IPC_HANDLE_WIN32,
+    win32_kmt = CUVIS_CUDA_IPC_HANDLE_WIN32_KMT,
+    posix_fd = CUVIS_CUDA_IPC_HANDLE_POSIX_FD
+  };
+
+  /** @brief The loaded cuvis library does not provide a CUDA function that was called. */
+  class cuda_unavailable_error : public std::runtime_error
+  {
+  public:
+    explicit cuda_unavailable_error(char const* name)
+        : std::runtime_error(
+            std::string("the loaded cuvis library does not provide ") + name),
+          _name(name)
+    {}
+
+    char const* name() const { return _name; }
+
+  private:
+    char const* _name;
+  };
+
+  /** @brief Whether the loaded cuvis library provides every CUDA entry point.
+   *
+   * Answers only the library question and never touches the device. Cheap and cached;
+   * safe to call before @ref General::init.
+   */
+  bool cuda_supported();
+
+  /** @brief The CUDA entry points the loaded cuvis library did not provide.
+   *
+   * Empty when @ref cuda_supported is true. Naming them is the only field diagnostic
+   * that separates an old SDK from a device that cannot do IPC.
+   */
+  std::vector<std::string> const& cuda_missing_symbols();
+
+  /** @brief Whether this device and driver support one IPC backend.
+   *
+   * Returns false rather than throwing when the library provides no CUDA API, so a
+   * caller can ask both questions with one call.
+   * @copydoc cuvis_cuda_ipc_backend_available
+   */
+  bool cuda_ipc_backend_available(cuda_ipc_backend_t backend);
+
+  /** \cond INTERNAL */
+  namespace detail
+  {
+    // The CUDA entry points as looked up in the loaded library. A null member is a
+    // function the library does not provide; `missing` names them for a diagnostic.
+    //
+    // SDK_CCALL is __cdecl, which is also what the one entry point declared without it
+    // (cuvis_measurement_get_data_image_cuda) compiles to. That equivalence holds on x64
+    // only; a 32-bit build would need the declarations to be fixed upstream first.
+    struct cuda_symbols
+    {
+      CUVIS_STATUS(SDK_CCALL* measurement_get_data_image_cuda)
+      (CUVIS_MESU, CUVIS_CHAR const*, cuda_imbuffer_t*) = nullptr;
+      CUVIS_STATUS(SDK_CCALL* mem_get_view)(cuda_mem_t, cuda_mem_view_t*) = nullptr;
+      CUVIS_STATUS(SDK_CCALL* mem_copy_handle)(cuda_mem_t, cuda_mem_t*) = nullptr;
+      CUVIS_STATUS(SDK_CCALL* mem_free)(cuda_mem_t) = nullptr;
+      CUVIS_STATUS(SDK_CCALL* ipc_handle_create)(cuda_mem_t, int, cuda_ipc_t*) = nullptr;
+      CUVIS_STATUS(SDK_CCALL* ipc_get_descriptor)(cuda_ipc_t, cuda_ipc_descriptor_t*) = nullptr;
+      CUVIS_STATUS(SDK_CCALL* ipc_handle_free)(cuda_ipc_t) = nullptr;
+      CUVIS_STATUS(SDK_CCALL* ipc_backend_available)(int, int*) = nullptr;
+      std::vector<std::string> missing;
+    };
+
+    // Resolved once, on first call. Defined in cuvis_cuda_symbols.cpp, which is the only
+    // place in the wrapper that includes an OS header.
+    cuda_symbols const& cuda_syms();
+
+    template <typename Fn> Fn require(Fn fn, char const* name)
+    {
+      if (!fn)
+        throw cuda_unavailable_error(name);
+      return fn;
+    }
+  } // namespace detail
+  /** \endcond */
+
+  /** @brief A live cross-process export of a device buffer.
+   *
+   * Holds the descriptor a consumer needs to map the buffer. There is no cross-process
+   * refcount: the consumer's mapping stays valid only while this object is alive.
+   */
+  class CudaIpcExport
+  {
+    friend class CudaImage;
+
+  public:
+    cuda_ipc_backend_t backend() const { return static_cast<cuda_ipc_backend_t>(_descriptor.backend); }
+
+    cuda_ipc_handle_type_t handle_type() const
+    {
+      return static_cast<cuda_ipc_handle_type_t>(_descriptor.handle_type);
+    }
+
+    cuda_ipc_descriptor_t const& descriptor() const { return _descriptor; }
+
+  private:
+    CudaIpcExport(std::shared_ptr<cuda_mem_t> mem, cuda_ipc_backend_t backend);
+
+    // _mem is declared first so it is destroyed last: the SDK requires the export
+    // registration to be released before the memory it refers to.
+    std::shared_ptr<cuda_mem_t> _mem;
+    std::shared_ptr<cuda_ipc_t> _ipc;
+    cuda_ipc_descriptor_t _descriptor;
+  };
+
+  /** @brief Image data from a measurement that stays resident in CUDA device memory.
+   *
+   * Obtained from @ref Measurement::cuda_image. Mirrors @ref image_t, except the host
+   * pointer is replaced by a device buffer reachable through @ref view (same process)
+   * or @ref make_ipc (another process).
+   */
+  class CudaImage
+  {
+    friend class Measurement;
+
+  public:
+    std::size_t width() const { return _width; }
+    std::size_t height() const { return _height; }
+    std::size_t channels() const { return _channels; }
+
+    /** bytes per element */
+    std::size_t bytes_per_element() const { return _bytes; }
+
+    /** total bytes of the device buffer */
+    std::size_t size_in_bytes() const { return _length; }
+
+    cuvis_imbuffer_format_t format() const { return _format; }
+
+    /** wavelength vector, nullptr or an array of @ref channels entries in nano meter */
+    std::uint32_t const* wavelength() const { return _wavelength; }
+
+    /**
+     * @copydoc cuvis_cuda_mem_get_view
+     */
+    cuda_mem_view_t view() const;
+
+    /**
+     * @copydoc cuvis_cuda_ipc_handle_create
+     */
+    CudaIpcExport make_ipc(cuda_ipc_backend_t backend) const;
+
+  private:
+    explicit CudaImage(cuda_imbuffer_t const& buffer);
+
+    std::shared_ptr<cuda_mem_t> _mem;
+    std::size_t _width;
+    std::size_t _height;
+    std::size_t _channels;
+    std::size_t _bytes;
+    std::size_t _length;
+    cuvis_imbuffer_format_t _format;
+    std::uint32_t const* _wavelength;
+  };
+
+  /**@}*/
+
   /** @brief central measurement class
    */
   class Measurement
@@ -871,6 +1086,18 @@ namespace cuvis
      * Return image data from measurement.
      */
     image_data_t const* get_imdata() const { return _image_data.get(); }
+
+    /** @brief Get image data from the measurement without moving it off the CUDA device
+     *
+     * Deliberately not part of the eagerly populated @ref get_imdata map: acquiring a
+     * device buffer is an explicit, per-key request. The host and device copies coexist,
+     * so calling this after the host fetch is fine.
+     *
+     * Requires the SDK to be running in GPU mode (force_gpu_mode="cuda" in cuvis.settings);
+     * otherwise the cube is not device-backed and this throws. Throws @ref
+     * cuda_unavailable_error when the loaded library has no CUDA API at all.
+     */
+    CudaImage cuda_image(std::string const& key) const;
 
     /** @brief Get string data from measurement
      */
@@ -1617,6 +1844,77 @@ namespace cuvis
     {
       throw cuvis_sdk_exception(cuvis_get_last_error_msg(), cuvis_get_last_error_msg_localized());
     }
+  }
+
+  inline bool cuda_supported() { return detail::cuda_syms().missing.empty(); }
+
+  inline std::vector<std::string> const& cuda_missing_symbols() { return detail::cuda_syms().missing; }
+
+  inline bool cuda_ipc_backend_available(cuda_ipc_backend_t backend)
+  {
+    auto* probe = detail::cuda_syms().ipc_backend_available;
+    if (!probe)
+      return false;
+
+    int available = 0;
+    chk(probe(static_cast<int>(backend), &available));
+    return available != 0;
+  }
+
+  inline CudaIpcExport::CudaIpcExport(std::shared_ptr<cuda_mem_t> mem, cuda_ipc_backend_t backend)
+      : _mem(std::move(mem)), _descriptor{}
+  {
+    auto const& syms = detail::cuda_syms();
+
+    cuda_ipc_t ipc;
+    chk(detail::require(syms.ipc_handle_create, "cuvis_cuda_ipc_handle_create")(
+        *_mem, static_cast<int>(backend), &ipc));
+
+    auto* release = detail::require(syms.ipc_handle_free, "cuvis_cuda_ipc_handle_free");
+    _ipc = std::shared_ptr<cuda_ipc_t>(new cuda_ipc_t{ipc}, [release](cuda_ipc_t* handle) {
+      release(*handle);
+      delete handle;
+    });
+
+    chk(detail::require(syms.ipc_get_descriptor, "cuvis_cuda_ipc_get_descriptor")(*_ipc, &_descriptor));
+  }
+
+  inline CudaImage::CudaImage(cuda_imbuffer_t const& buffer)
+      : _mem(std::shared_ptr<cuda_mem_t>(
+            new cuda_mem_t{buffer.handle},
+            [release = detail::require(detail::cuda_syms().mem_free, "cuvis_cuda_mem_free")](
+                cuda_mem_t* handle) {
+              release(*handle);
+              delete handle;
+            })),
+        _width(buffer.width),
+        _height(buffer.height),
+        _channels(buffer.channels),
+        _bytes(buffer.bytes),
+        _length(buffer.length),
+        _format(buffer.format),
+        _wavelength(buffer.wavelength)
+  {}
+
+  inline cuda_mem_view_t CudaImage::view() const
+  {
+    cuda_mem_view_t view{};
+    chk(detail::require(detail::cuda_syms().mem_get_view, "cuvis_cuda_mem_get_view")(*_mem, &view));
+    return view;
+  }
+
+  inline CudaIpcExport CudaImage::make_ipc(cuda_ipc_backend_t backend) const
+  {
+    return CudaIpcExport(_mem, backend);
+  }
+
+  inline CudaImage Measurement::cuda_image(std::string const& key) const
+  {
+    cuda_imbuffer_t buffer{};
+    chk(detail::require(
+        detail::cuda_syms().measurement_get_data_image_cuda,
+        "cuvis_measurement_get_data_image_cuda")(*_mesu, key.c_str(), &buffer));
+    return CudaImage(buffer);
   }
 
   inline Measurement::Measurement(Measurement const& source)

@@ -5,9 +5,13 @@ find_library(
     NAMES "cuvis"
     HINTS "/lib/cuvis" "$ENV{PROGRAMFILES}/Cuvis/bin")
 
+# The wrapper aliases the SDK's CUDA structs, so the header it compiles against has to
+# declare them. SDK 3.6.0 ships that block in sdk/cuvis_c; older drops carried it only in
+# bin/cuvis.h, a pure superset. bin is searched first so the copy that has it wins on
+# either layout - find_path cannot discriminate on content.
 find_path(CuvisCpp_INCLUDE_DIR
   NAMES cuvis.h
-  HINTS "/usr/include/" "$ENV{PROGRAMFILES}/Cuvis/sdk/cuvis_c")
+  HINTS "/usr/include/" "$ENV{PROGRAMFILES}/Cuvis/bin" "$ENV{PROGRAMFILES}/Cuvis/sdk/cuvis_c")
 
 include(FindPackageHandleStandardArgs)
 
@@ -27,7 +31,7 @@ else()
 		  INTERFACE_INCLUDE_DIRECTORIES "${CuvisCpp_INCLUDE_DIR};${CMAKE_CURRENT_LIST_DIR}/interface;${CMAKE_CURRENT_LIST_DIR}/auxiliary/include"
 		  IMPORTED_LOCATION ${CuvisCpp_LIBRARY})
 		target_compile_features(cuvis::cpp INTERFACE cxx_std_17)
- 
+
 	  find_package(Doxygen)
 	  option(DOXYGEN_BUILD_DOCUMENTATION "Create and install the HTML based API documentation (requires Doxygen)" TRUE)
 			
@@ -97,6 +101,65 @@ else()
   # Get the version of the library
   get_library_version("${CuvisCpp_LIBRARY}" LIB_VERSION)
 
+  # The CUDA entry points are looked up at runtime rather than imported, so the wrapper
+  # works against a library that does not export them. The lookup needs an OS header,
+  # which the header-only interface must not pull in, so it lives in this one small
+  # archive that every consumer of cuvis::cpp links.
+  #
+  # Attached after get_library_version on purpose: that runs a try_run against
+  # cuvis::cpp, and a try_compile project cannot see a target defined out here.
+  if(NOT TARGET cuvis_cuda_symbols)
+    add_library(cuvis_cuda_symbols STATIC "${CMAKE_CURRENT_LIST_DIR}/interface/cuvis_cuda_symbols.cpp")
+    target_include_directories(cuvis_cuda_symbols PRIVATE "${CuvisCpp_INCLUDE_DIR}"
+                                                          "${CMAKE_CURRENT_LIST_DIR}/interface")
+    target_compile_features(cuvis_cuda_symbols PRIVATE cxx_std_17)
+    target_link_libraries(cuvis_cuda_symbols PRIVATE ${CMAKE_DL_LIBS})
+    set_property(TARGET cuvis::cpp APPEND PROPERTY INTERFACE_LINK_LIBRARIES cuvis_cuda_symbols)
+  endif()
+
+  # Whether the installed library provides the CUDA API, for
+  # find_package(CuvisCpp ... CUDA). The answer has to come from running a probe rather
+  # than from linking one: the entry points are resolved from the DLL at run time, and
+  # the shipped import library is known to lag the DLL, so a link probe would answer
+  # about the wrong file. The header cannot answer either - the wrapper carries its own
+  # declarations, so it compiles whether or not cuvis.h has them.
+  #
+  # The component means "this SDK provides the API", not "this machine can export a
+  # buffer". A build host with no GPU still satisfies it; cuvis_cuda_ipc_backend_available
+  # is the runtime gate for the device.
+  function(cuvis_probe_cuda)
+    try_run(
+      CUVIS_CUDA_PROBE_RUN_RESULT CUVIS_CUDA_PROBE_COMPILE_RESULT
+      ${CMAKE_BINARY_DIR}/try_compile
+      SOURCES "${CMAKE_CURRENT_LIST_DIR}/helper/cuvis_cuda_probe.cpp"
+              "${CMAKE_CURRENT_LIST_DIR}/interface/cuvis_cuda_symbols.cpp"
+      CXX_STANDARD 17
+      CXX_STANDARD_REQUIRED TRUE
+      RUN_OUTPUT_VARIABLE CUVIS_CUDA_PROBE_OUTPUT
+      COMPILE_OUTPUT_VARIABLE CUVIS_CUDA_PROBE_LOG
+      CMAKE_FLAGS
+          "-DINCLUDE_DIRECTORIES=${CuvisCpp_INCLUDE_DIR};${CMAKE_CURRENT_LIST_DIR}/interface"
+          -DLINK_LIBRARIES=${CuvisCpp_LIBRARY})
+
+    if(NOT CUVIS_CUDA_PROBE_COMPILE_RESULT)
+      message(FATAL_ERROR "Failed to build the cuvis CUDA probe:\n${CUVIS_CUDA_PROBE_LOG}")
+    endif()
+
+    if(CUVIS_CUDA_PROBE_RUN_RESULT EQUAL 0)
+      set(CuvisCpp_CUDA_FOUND TRUE CACHE INTERNAL "")
+      message(STATUS "cuvis CUDA API: provided by ${CuvisCpp_LIBRARY}")
+    else()
+      set(CuvisCpp_CUDA_FOUND FALSE CACHE INTERNAL "")
+      string(REPLACE "\n" " " _missing "${CUVIS_CUDA_PROBE_OUTPUT}")
+      string(STRIP "${_missing}" _missing)
+      # FAILED_TO_RUN also lands here, and means the same thing to a consumer: the
+      # installed library cannot be relied on for the CUDA API.
+      message(STATUS "cuvis CUDA API: not provided (${CUVIS_CUDA_PROBE_RUN_RESULT}) ${_missing}")
+    endif()
+  endfunction()
+
+  cuvis_probe_cuda()
+
   # Parse the version components
   string(REGEX MATCH "v\\. ([0-9]+)\\.([0-9]+)\\.([0-9]+)" LIB_VERSION_MATCH "${LIB_VERSION}")
   # Check if the version was successfully extracted
@@ -118,8 +181,12 @@ else()
   set(CuvisCpp_INCLUDE_DIRS "${CuvisCpp_INCLUDE_DIR}" CACHE INTERNAL "")
   set(CuvisCpp_LIBRARIES "cuvis::cpp" CACHE INTERNAL "")
 
+  # HANDLE_COMPONENTS makes CuvisCpp_<component>_FOUND the verdict for each requested
+  # component, so find_package(CuvisCpp 3.4 REQUIRED CUDA) fails configure on an SDK
+  # that does not provide the CUDA API.
   find_package_handle_standard_args(CuvisCpp
 		REQUIRED_VARS CuvisCpp_LIBRARY CuvisCpp_INCLUDE_DIR
-		VERSION_VAR CuvisCpp_VERSION)
+		VERSION_VAR CuvisCpp_VERSION
+		HANDLE_COMPONENTS)
 
 endif()
