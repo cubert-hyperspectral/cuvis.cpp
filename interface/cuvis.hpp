@@ -912,16 +912,23 @@ namespace cuvis
     // SDK_CCALL is __cdecl, which is also what the one entry point declared without it
     // (cuvis_measurement_get_data_image_cuda) compiles to. That equivalence holds on x64
     // only; a 32-bit build would need the declarations to be fixed upstream first.
+    //
+    // The two frees take their handle BY POINTER. CUVIS_HANDLE is an int, so passing it by
+    // value makes the library dereference a small integer: an access violation on the
+    // first release, not a status code. Nothing here is checked against cuvis.h at compile
+    // time (these are GetProcAddress casts), and the drops disagree - the 3.6.0 public
+    // sdk/cuvis_c/cuvis.h declared both by value while bin/cuvis.h always declared them by
+    // pointer - so a drop that flips back would be silent again.
     struct cuda_symbols
     {
       CUVIS_STATUS(SDK_CCALL* measurement_get_data_image_cuda)
       (CUVIS_MESU, CUVIS_CHAR const*, cuda_imbuffer_t*) = nullptr;
       CUVIS_STATUS(SDK_CCALL* mem_get_view)(cuda_mem_t, cuda_mem_view_t*) = nullptr;
       CUVIS_STATUS(SDK_CCALL* mem_copy_handle)(cuda_mem_t, cuda_mem_t*) = nullptr;
-      CUVIS_STATUS(SDK_CCALL* mem_free)(cuda_mem_t) = nullptr;
+      CUVIS_STATUS(SDK_CCALL* mem_free)(cuda_mem_t*) = nullptr;
       CUVIS_STATUS(SDK_CCALL* ipc_handle_create)(cuda_mem_t, int, cuda_ipc_t*) = nullptr;
       CUVIS_STATUS(SDK_CCALL* ipc_get_descriptor)(cuda_ipc_t, cuda_ipc_descriptor_t*) = nullptr;
-      CUVIS_STATUS(SDK_CCALL* ipc_handle_free)(cuda_ipc_t) = nullptr;
+      CUVIS_STATUS(SDK_CCALL* ipc_handle_free)(cuda_ipc_t*) = nullptr;
       CUVIS_STATUS(SDK_CCALL* ipc_backend_available)(int, int*) = nullptr;
       std::vector<std::string> missing;
     };
@@ -1872,7 +1879,7 @@ namespace cuvis
 
     auto* release = detail::require(syms.ipc_handle_free, "cuvis_cuda_ipc_handle_free");
     _ipc = std::shared_ptr<cuda_ipc_t>(new cuda_ipc_t{ipc}, [release](cuda_ipc_t* handle) {
-      release(*handle);
+      release(handle);
       delete handle;
     });
 
@@ -1884,7 +1891,7 @@ namespace cuvis
             new cuda_mem_t{buffer.handle},
             [release = detail::require(detail::cuda_syms().mem_free, "cuvis_cuda_mem_free")](
                 cuda_mem_t* handle) {
-              release(*handle);
+              release(handle);
               delete handle;
             })),
         _width(buffer.width),
